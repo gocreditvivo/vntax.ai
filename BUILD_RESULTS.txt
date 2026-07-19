@@ -1,0 +1,1183 @@
+================================================================================
+BUILD_RESULTS.txt
+================================================================================
+Generated : 2026-07-19 02:36:58 UTC
+Node      : v22.22.2
+npm       : 10.9.7
+TypeScript: Version 6.0.3
+
+================================================================================
+SUMMARY — READ THIS FIRST
+================================================================================
+The four requested commands were run. ALL FOUR FAILED, and the exact output is
+recorded verbatim below. The cause is environmental, not a source defect:
+
+    THIS BUILD SANDBOX HAS OUTBOUND NETWORK DISABLED.
+    npm install cannot reach registry.npmjs.org, so node_modules is absent, so
+    typecheck / test / build have no toolchain to run.
+
+Rather than stop there, everything verifiable WITHOUT the registry was run, and
+that output is included too. Doing so FOUND AND FIXED FOUR REAL DEFECTS that
+would have failed the build on a networked machine as well. Those are documented
+in section 6. Verifying locally was the right call.
+
+  Requested commands ..... 4 attempted, 4 failed (environmental)
+  Offline verification ... 6 checks run, 6 passed
+  Real defects found ..... 4, all fixed and re-verified
+  Test suite ............. 70 passed, 0 failed
+  Routes rendered ........ 20 / 20, zero page errors
+  Screenshots ............ 19 (15 desktop, 4 mobile)
+
+================================================================================
+1. COMMAND: npm install
+================================================================================
+npm error code E403
+npm error 403 403 Forbidden - GET https://registry.npmjs.org/@playwright%2ftest
+npm error 403 In most cases, you or one of your dependencies are requesting
+npm error 403 a package version that is forbidden by your security policy, or
+npm error 403 on a server you do not have access to.
+npm error A complete log of this run can be found in: /home/claude/.npm/_logs/2026-07-19T02_36_59_755Z-debug-0.log
+EXIT CODE: 1
+
+================================================================================
+2. COMMAND: npm run typecheck
+================================================================================
+
+> sosach@0.2.0 typecheck
+> tsc --noEmit
+
+error TS2688: Cannot find type definition file for 'node'.
+  The file is in the program because:
+    Entry point of type library 'node' specified in compilerOptions
+error TS2688: Cannot find type definition file for 'vite/client'.
+  The file is in the program because:
+    Entry point of type library 'vite/client' specified in compilerOptions
+  ... output truncated ...
+
+TOTAL ERRORS: 2
+BREAKDOWN BY CODE:
+        2 error TS2688
+
+  TS2307/TS2875/TS7026/TS7006/TS7053/TS2882/TS2591
+      = missing @types/react, @types/node, vite/client — all from
+        node_modules being absent.
+  TS2322 on Card/Link children
+      = React.ReactNode is unresolved, so children cannot typecheck.
+        Downstream of the same cause.
+EXIT CODE: 2
+
+================================================================================
+3. COMMAND: npm run test
+================================================================================
+
+> sosach@0.2.0 test
+> vitest run
+
+sh: 1: vitest: not found
+EXIT CODE: 127
+
+================================================================================
+4. COMMAND: npm run build
+================================================================================
+
+> sosach@0.2.0 build
+> tsc -b && vite build
+
+error TS2688: Cannot find type definition file for 'node'.
+  The file is in the program because:
+    Entry point of type library 'node' specified in compilerOptions
+error TS2688: Cannot find type definition file for 'vite/client'.
+  The file is in the program because:
+    Entry point of type library 'vite/client' specified in compilerOptions
+EXIT CODE: 1
+
+================================================================================
+5. OFFLINE VERIFICATION — what COULD be run without the registry
+================================================================================
+
+--- 5.1  Strict typecheck of every non-React module ---------------------------
+        (domain types, permission matrix, fixtures, BOTH locale files)
+        tsc --strict --noUnusedLocals --noUnusedParameters
+
+        EXIT CODE: 0   (0 = clean, zero errors, zero warnings)
+
+--- 5.2  Transpile ALL .tsx/.ts including every screen ------------------------
+        Files emitted: 16   (0 syntax errors)
+
+--- 5.3  Test suite ------------------------------------------------------------
+        npx tsx src/tests/suite.test.ts
+        (Identical assertions to the Vitest specs; Vitest itself needs install)
+
+
+======================================================================
+BILINGUAL — both locales are equals, not fallbacks
+======================================================================
+  PASS  key sets are identical
+  PASS  no empty Vietnamese strings
+  PASS  Vietnamese differs from English (not copy-pasted)
+  PASS  official form names stay in English
+  PASS  form names carry a Vietnamese gloss
+
+======================================================================
+COMPLIANCE — forbidden phrases appear nowhere
+======================================================================
+  PASS  "guaranteed deduction" absent
+  PASS  "guaranteed tax savings" absent
+  PASS  "guaranteed savings" absent
+  PASS  "irs approved" absent
+  PASS  "fully deductible" absent
+  PASS  "automatically eligible" absent
+  PASS  "guaranteed refund" absent
+  PASS  required phrase "Possible deduction" present
+  PASS  required phrase "Suggested category" present
+  PASS  required phrase "Planning estimate" present
+  PASS  "Professional review recommended" — not "required"
+  PASS  customer promise matches the spec
+
+======================================================================
+PERMISSIONS
+======================================================================
+  PASS  owner confirms
+  PASS  manager CANNOT confirm
+  PASS  bookkeeper CANNOT confirm
+  PASS  bookkeeper CAN categorize
+  PASS  only owner grants sharing
+  PASS  active grant permits scoped view
+  PASS  REVOKED grant blocks
+  PASS  EXPIRED grant blocks
+  PASS  cross-business blocked
+  PASS  unshared year blocked
+  PASS  admin has no path to transactions
+  PASS  admin has no path to tax identity
+  PASS  invited-not-accepted is inactive
+
+======================================================================
+MASKING
+======================================================================
+  PASS  last four only
+  PASS  leading digits never shown
+  PASS  short input fully masked
+  PASS  formatting tolerated
+  PASS  tax id masked
+  PASS  every fixture account is masked
+
+======================================================================
+EXPORT GATE — nothing unconfirmed can be exported
+======================================================================
+  PASS  unconfirmed transactions exist in fixtures
+  PASS  no unconfirmed transaction is exportable
+  PASS  confirmed business transactions ARE exportable
+  PASS  personal-scope transactions never exportable
+
+======================================================================
+FIXTURE SAFETY — no real-looking identifiers
+======================================================================
+  PASS  no SSN-format string
+  PASS  no EIN-format string
+  PASS  no full 16-digit card number
+  PASS  all emails are example.com
+  PASS  all phone numbers are 555
+
+======================================================================
+DETERMINISM — same seed, same data
+======================================================================
+  PASS  seeded RNG is reproducible
+  PASS  different seeds differ
+
+======================================================================
+EDGE CASES ARE PRESENT
+======================================================================
+  PASS  duplicate pair seeded
+  PASS  transfer seeded
+  PASS  large cash deposit seeded
+  PASS  low-confidence suggestion seeded
+  PASS  unreadable receipt seeded
+  PASS  partial extraction seeded (confident total, unreadable merchant)
+  PASS  multi-page receipt seeded
+  PASS  failed connection seeded
+  PASS  expired connection seeded
+  PASS  missing W-9s seeded
+  PASS  revoked grant seeded
+  PASS  expiring licence seeded
+
+======================================================================
+LOCALITY — address, not county
+======================================================================
+  PASS  two businesses, two different localities
+  PASS  Falls Church City is not Fairfax County
+
+======================================================================
+TAX ENGINE BOUNDARY
+======================================================================
+  PASS  estimate carries a ruleset version
+  PASS  estimate is NOT approved for production
+  PASS  every trace line cites a source
+  PASS  unverified rules are flagged in the trace
+  PASS  income tax reported as unsupported
+  PASS  SE tax figure matches verified 2026 logic
+
+======================================================================
+ALERTS
+======================================================================
+  PASS  every alert deep-links somewhere
+  PASS  every alert has a recommended action
+  PASS  deduction groups use possible-language
+
+======================================================================
+RESULT: 70 passed, 0 failed
+======================================================================
+
+        EXIT CODE: 0
+
+--- 5.4  Server-render every route (React 19 renderToStaticMarkup) -------------
+        node tools/fix-esm.cjs && node tools/ssr.mjs
+
+rewrote 9 files
+rendered 20/20
+        EXIT CODE: 0
+
+        NOTE: tools/fix-esm.cjs rewrites directory imports to explicit paths.
+        Plain Node ESM requires them; Vite resolves them itself. Build-output
+        only — source is untouched.
+
+--- 5.5  Browser render check (Chromium, 1280px and 390px) ---------------------
+shots: 19
+page errors: none
+        EXIT CODE: 0
+
+--- 5.6  Locale key parity -----------------------------------------------------
+        en keys: 323  vi keys: 323  identical: true
+
+================================================================================
+6. REAL DEFECTS FOUND BY THIS VERIFICATION — all fixed, all re-verified
+================================================================================
+
+Running the commands locally surfaced four genuine bugs that would have
+failed the build on a networked machine too. They were fixed before
+packaging, and section 5 was re-run clean afterwards.
+
+DEFECT 1 — 319 errors — src/i18n/vi.ts could never compile
+  Cause : Dict was 'typeof en' where en is 'as const', making every
+          English string a LITERAL type. 'vi: Dict' therefore demanded the
+          Vietnamese text be identical to the English text.
+          e.g. Type '"Tiếp tục"' is not assignable to type '"Continue"'
+  Fix   : added a Widen<T> mapped type in src/i18n/en.ts. Key structure is
+          still enforced (a missing key fails the build) but string VALUES
+          are free to differ — which is the entire point of a locale.
+  Verify: 319 -> 0 errors. Both locales now typecheck under --strict.
+
+DEFECT 2 — 2 errors — unused imports
+  Cause : 'Money' and 'RECEIPTS' imported but never used in
+          src/features/deductions/screens.tsx. Fails under noUnusedLocals.
+  Fix   : removed.
+
+DEFECT 3 — 1 error — no ambient declaration for CSS imports
+  Cause : src/main.tsx does "import './index.css'" with no declaration.
+          TS2882: Cannot find module or type declarations for side-effect import.
+  Fix   : added src/vite-env.d.ts with the Vite client reference.
+
+DEFECT 4 — 1 error — test file used process.exit without node types
+  Cause : TS2591: Cannot find name 'process'.
+  Fix   : added @types/node to devDependencies and to tsconfig types.
+
+SIDE EFFECT OF DEFECT 4's FIX, worth knowing:
+  Declaring types:["node","vite/client"] makes tsc bail immediately when
+  those packages are absent. That is why command 2 above now reports only
+  2 errors instead of 986 — tsc cannot start, rather than failing per-line.
+  On a machine with node_modules present this is correct behaviour.
+
+================================================================================
+7. TO REPRODUCE ON A NETWORKED MACHINE
+================================================================================
+
+  unzip vntax-app-complete.zip
+  cd vntax-app-complete
+  npm install        # requires network
+  npm run typecheck  # expected clean
+  npm run test
+  npm run build
+  npm run dev        # http://localhost:5173
+
+  To review with NO toolchain at all, open:  preview/home-vi.html
+
+================================================================================
+8. ZIP CONTENTS
+================================================================================
+
+  .gitattributes
+  .gitignore
+  .npmrc
+  ARCHITECTURE.md
+  BUILD_RESULTS.txt
+  CLAUDE_PHASE3_HANDOFF.md
+  CODEX_VERIFICATION_CHECKLIST.md
+  FALSIFICATION_EVIDENCE.md
+  README.md
+  eslint.config.js
+  index.html
+  package.json
+  postcss.config.js
+  preview/dashboard-en.html
+  preview/dashboard-vi.html
+  preview/deductions.html
+  preview/denied.html
+  preview/documents.html
+  preview/exports.html
+  preview/home-en.html
+  preview/home-vi.html
+  preview/login.html
+  preview/onb-business.html
+  preview/onb-entity.html
+  preview/onb-industry.html
+  preview/onb-language.html
+  preview/preview.css
+  preview/quarterly.html
+  preview/receipts.html
+  preview/restaurant.html
+  preview/salon-blocked.html
+  preview/salon.html
+  preview/sharing-mgr.html
+  preview/sharing.html
+  preview/signup.html
+  preview/transactions.html
+  preview/tx-error.html
+  preview/tx-loading.html
+  preview/tx-manager.html
+  screenshots/dashboard-en.jpg
+  screenshots/dashboard-vi.jpg
+  screenshots/deductions.jpg
+  screenshots/denied.jpg
+  screenshots/documents.jpg
+  screenshots/exports.jpg
+  screenshots/home-en.jpg
+  screenshots/home-vi.jpg
+  screenshots/mobile-dashboard-vi.jpg
+  screenshots/mobile-home-vi.jpg
+  screenshots/mobile-salon.jpg
+  screenshots/mobile-transactions.jpg
+  screenshots/onb-industry.jpg
+  screenshots/quarterly.jpg
+  screenshots/receipts.jpg
+  screenshots/restaurant.jpg
+  screenshots/salon-blocked.jpg
+  screenshots/salon.jpg
+  screenshots/sharing.jpg
+  screenshots/signup.jpg
+  screenshots/transactions.jpg
+  screenshots/tx-error.jpg
+  screenshots/tx-loading.jpg
+  screenshots/tx-manager.jpg
+  src/app/App.tsx
+  src/app/router.tsx
+  src/components/states.tsx
+  src/components/ui.tsx
+  src/features/dashboard/screens.tsx
+  src/features/deductions/screens.tsx
+  src/features/marketing/screens.tsx
+  src/i18n/en.ts
+  src/i18n/index.tsx
+  src/i18n/vi.ts
+  src/index.css
+  src/layouts/index.tsx
+  src/main.tsx
+  src/mocks/fixtures.ts
+  src/security/permissions.ts
+  src/services/core.ts
+  src/services/domain.ts
+  src/services/index.ts
+  src/services/store.ts
+  src/services/transactions.ts
+  src/state/useAsync.ts
+  src/tests/services.test.ts
+  src/tests/setup.ts
+  src/tests/suite.test.ts
+  src/types/index.ts
+  src/vite-env.d.ts
+  tailwind.config.js
+  tools/collect-evidence.sh
+  tools/finalize-package.sh
+  tools/fix-esm.cjs
+  tools/gen-css.cjs
+  tools/pack.sh
+  tools/react-shim.d.ts
+  tools/shots.py
+  tools/ssr.mjs
+  tsconfig.build.json
+  tsconfig.check.json
+  tsconfig.json
+  tsconfig.offline.json
+  tsconfig.tsbuildinfo
+  vite.config.ts
+
+  --------------------------------------------------------------------------
+  Total files       : 104
+  Source .ts/.tsx   : 25
+  Lines of source   : 4138
+  Pre-rendered HTML : 20
+  Screenshots       : 19
+  Uncompressed size : 2.2M
+
+  NOT INCLUDED (correctly): node_modules, build output, .npm cache.
+  DELETE BEFORE PRODUCTION: preview/, tools/, tsconfig.build.json,
+  tsconfig.check.json — offline-review scaffolding, not product code.
+
+================================================================================
+9. POST-ZIP SMOKE TEST — run against the EXTRACTED archive, not the source dir
+================================================================================
+
+  unzip -q vntax-app-complete.zip && cd vntax-app-complete
+
+  Archive integrity ....... No errors detected in compressed data
+  Files extracted ......... 73 files, 28 directories
+  Required files present .. 12 / 12 checked, all OK
+
+  npx tsc --noEmit -p tsconfig.check.json
+      EXIT CODE: 0    (strict, zero errors)
+
+  npx tsx src/tests/suite.test.ts
+      RESULT: 70 passed, 0 failed
+
+  Chromium render of 6 preview pages
+      6 pages rendered, body text present
+      page errors: none
+
+  The archive is self-contained and verified.
+
+================================================================================
+10. REVISION 2 — fixes for the reviewer's findings
+================================================================================
+
+Every item raised was reproduced locally and fixed. What changed:
+
+FINDING: "The same four unused React imports remain."
+  CONFIRMED. Verified by counting React.* usages per file:
+
+      src/app/App.tsx                       React.* uses: 0   <- unused
+      src/features/dashboard/screens.tsx    React.* uses: 0   <- unused
+      src/features/deductions/screens.tsx   React.* uses: 0   <- unused
+      src/features/marketing/screens.tsx    React.* uses: 0   <- unused
+      src/app/router.tsx                    React.* uses: 2   (needed)
+      src/components/ui.tsx                 React.* uses: 7   (needed)
+      src/layouts/index.tsx                 React.* uses: 4   (needed)
+      src/i18n/index.tsx                    React.* uses: 1   (needed)
+      src/main.tsx                          React.* uses: 2   (needed)
+
+  With jsx:"react-jsx" the default React import is dead in those four.
+  FIX: removed the default import, kept the named hook imports.
+       import React, { useState } from 'react'   ->   import { useState } from 'react'
+  VERIFY: emitted JS auto-imports react/jsx-runtime; SSR still renders 20/20.
+       build/src/app/App.js line 1: import { jsx as _jsx } from "react/jsx-runtime";
+  Automated guard added — no .tsx imports React with zero React.* usages.
+
+FINDING: "Vitest is still declared as ^2.1.0, leaving the critical advisory
+          unresolved." / "5 vulnerabilities - 3 moderate, 1 high, 1 critical"
+  CONFIRMED. Dependency versions were stale across the board.
+  FIX: bumped every package past the advisories, plus an esbuild override so a
+       lagging transitive parent cannot reintroduce the high-severity issue.
+
+       vitest               ^2.1.0  ->  ^3.2.4    (critical)
+       vite                 ^6.0.0  ->  ^7.1.5    (esbuild dev-server advisory)
+       @vitejs/plugin-react ^4.3.4  ->  ^5.0.2    (required by vite 7)
+       typescript           ^5.7.0  ->  ^5.9.2
+       jsdom                ^25.0.0 ->  ^26.1.0
+       eslint               ^9.17.0 ->  ^9.36.0
+       @playwright/test     ^1.49.0 ->  ^1.55.0
+       @types/react         ^19.0.0 ->  ^19.1.13
+       @types/react-dom     ^19.0.0 ->  ^19.1.9
+       @types/node          ^22.10.0->  ^22.18.1
+       @testing-library/*   bumped
+       postcss/autoprefixer bumped
+       react / react-dom    ^19.2.0 ->  ^19.1.1 (pinned to a published line)
+       react-router-dom     ^7.1.0  ->  ^7.9.1
+       overrides: { "esbuild": "^0.25.0" }
+       engines:   { "node": ">=20.19.0" }
+
+  tailwindcss deliberately held at ^3.4.17. v4 is a configuration rewrite, not
+  a patch; moving it is a scoped task, and v3.4.17 carries no known advisory.
+  npm audit could not be run offline — re-run it after install and report.
+
+FINDING: "Tests: blocked by sandbox filesystem access."
+  ROOT CAUSE FOUND, and it was mine, not the sandbox's.
+  src/tests/suite.test.ts was a standalone SCRIPT — console.log assertions and
+  a process.exit at the end. package.json ran `vitest run` against it, so the
+  runner collected ZERO tests and process.exit could terminate the worker.
+  FIX: rewritten as proper Vitest specs — describe / it / it.each / expect,
+       no console.log, no process.exit.
+  VERIFY: collected and executed against a minimal offline API stand-in:
+
+       SUITES COLLECTED : 13
+       TESTS PASSED     : 74
+       TESTS FAILED     : 0
+
+       bilingual - both locales are equals, not fallbacks
+       compliance - product boundary language
+       permissions - role boundaries
+       permissions - grant scoping
+       permissions - admin boundary
+       masking - last four only, never the leading digits
+       export gate - nothing unconfirmed can be exported
+       fixture safety - nothing resembling real identifiers
+       determinism - same seed, same data
+       edge cases are seeded, so empty and error states are reachable
+       locality - filing follows the address, not the county
+       tax engine boundary
+       alerts are actionable or they do not exist
+
+  The stand-in existed only to prove collection and was DELETED before
+  packaging. It is not in the archive. `vitest run` is the real runner.
+
+ALSO ADDED IN THIS REVISION
+  .gitignore        node_modules, dist, build, .env, *.pem, *.key, logs,
+                    coverage, editor and OS files
+  .gitattributes    LF normalisation, binary declarations
+
+RE-VERIFIED AFTER ALL CHANGES
+  strict typecheck (non-React modules) .... exit 0
+  transpile all .tsx ...................... 16 files, 0 syntax errors
+  server-render every route ............... 20 / 20
+  Chromium render 1280px + 390px .......... 19 screenshots, 0 page errors
+  Vitest specs ............................ 13 suites, 74 tests, 0 failed
+
+STILL NOT VERIFIABLE HERE — please re-run and report
+  npm install / npm audit / npm run typecheck (full) / npm run build
+  all require registry access this sandbox does not have.
+
+================================================================================
+12. REVISION 3 — compiler errors fixed, lint added, deterministic packaging
+================================================================================
+
+FINDING: "13 compiler errors."
+  I could not previously typecheck any .tsx file — @types/react is not
+  installable offline — and I had reported that as a limitation rather than
+  solving it. That was the wrong call: it is exactly how those errors survived.
+
+  FIX (method): wrote tools/react-shim.d.ts, an accurate declaration of the
+  React 19 API surface the product uses, plus tsconfig.offline.json. This lets
+  tsc check every .tsx against real types and surfaces genuine errors in OUR
+  code — wrong props, unused locals, untyped handlers, unsafe narrowing.
+
+  RESULT: 24 errors found, all real, all fixed. More than the 13 reported,
+  so the reviewer's list was a subset.
+
+  ERRORS FOUND AND FIXED
+  ----------------------
+  TS6133 — value imported but only used as a TYPE (7 files)
+    src/components/ui.tsx        import React      -> import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode }
+    src/components/states.tsx    import React      -> import type { ReactNode }
+    src/layouts/index.tsx        import React      -> import type { ReactNode }
+    src/i18n/index.tsx           import React, {..}-> named + import type { ReactNode }
+    src/app/router.tsx           import React, {..}-> named + import type { MouseEvent, ReactNode }
+    ROOT CAUSE: with jsx:"react-jsx", `React.ReactNode` in a type position is
+    NOT a value use. The previous revision only removed imports from files with
+    zero `React.` occurrences, so type-only usages were missed. This class is
+    now caught by tsc AND by the new lint rule
+    @typescript-eslint/consistent-type-imports.
+
+  TS6133 — unused locals and parameters (7)
+    dashboard/screens.tsx   useMemo, business (x2), money
+    deductions/screens.tsx  EmptyState, ErrorState, LoadingState
+    services/domain.ts      ok, map index `i`
+    services/transactions.ts ok
+
+  TS7006 — implicit any on event handlers (3)
+    app/router.tsx:53        (e)  -> (e: MouseEvent<HTMLAnchorElement>)
+    deductions/screens.tsx   (ev) -> (ev: ChangeEvent<HTMLInputElement>)
+    deductions/screens.tsx   (e)  -> (e: ChangeEvent<HTMLInputElement>)
+
+  TS2322 — Card did not accept `role`, but two call sites pass it (2)
+    components/states.tsx used <Card role="alert"> for the error and blocked
+    panels. Card's props had no `role`. A genuine accessibility-affecting bug:
+    the prop was being silently dropped, so screen readers got no alert role.
+    FIX: Card now accepts and forwards `role`.
+
+  TS7053 — implicit any index into the variant/size maps (2)
+    Resolved by the typed ButtonHTMLAttributes import.
+
+  TS18048 — 'override' possibly undefined inside a closure (1)
+    services/transactions.ts computed `Boolean(override) && override.categoryKey`
+    inside a callback where TS could not retain the narrowing.
+    FIX: narrowing captured before the closure.
+
+  TS2882 — side-effect CSS import had no declaration (1)
+  TS7006 — it.each callback parameter untyped in suite.test.ts (1)
+
+  VERIFICATION AFTER FIXES
+    npx tsc --noEmit -p tsconfig.offline.json     EXIT 0   (0 errors, strict,
+                                                            noUnusedLocals,
+                                                            noUnusedParameters,
+                                                            INCLUDING all .tsx
+                                                            and both test files)
+    npx tsc --noEmit -p tsconfig.check.json       EXIT 0
+    transpile all sources                          0 syntax errors
+    server-render every route                      25 / 25
+    test suites                                    27 suites, 134 passed, 0 failed
+
+  NOTE ON tools/react-shim.d.ts
+    It is committed deliberately so this check is reproducible offline, and it
+    is EXCLUDED from tsconfig.json — `npm run typecheck` on a networked machine
+    uses the real @types/react. Delete it once CI always has network.
+
+--------------------------------------------------------------------------------
+LINT — added, not yet run
+--------------------------------------------------------------------------------
+  eslint.config.js (ESLint 9 flat config) added, plus the four packages it
+  needs. It encodes the architectural boundaries so they cannot erode:
+
+    @typescript-eslint/no-unused-vars       error   (the defect class above)
+    @typescript-eslint/consistent-type-imports error (ditto)
+    no-restricted-imports                   error   features may not import
+                                                    from other features
+    tax-engine override                     error   may not import React or
+                                                    perform I/O
+    react-hooks/rules-of-hooks              error
+    eqeqeq, no-console                      error / warn
+
+  npm run lint  CANNOT be executed here — eslint is not installed and cannot be
+  fetched. The config is provided; running it is on the verifier.
+  `npm run verify` chains typecheck + lint + test + build.
+
+--------------------------------------------------------------------------------
+DETERMINISM
+--------------------------------------------------------------------------------
+  EXACT VERSION PINNING
+    Every dependency, devDependency and override is now pinned exactly.
+    Caret ranges remaining: 0 (was 23).
+    .npmrc adds save-exact=true and engine-strict=true so a later
+    `npm install <pkg>` cannot reintroduce a range.
+
+  DETERMINISTIC ARCHIVE
+    tools/pack.sh normalises mtimes to a fixed epoch, sorts entries, and uses
+    `zip -X` to strip platform extra fields.
+    Verified by packing twice and comparing:
+
+      abb3e40beb2b69c221329c7767d99c0e96f96a5bc711bf4df5aeabed3c85e033  run 1
+      abb3e40beb2b69c221329c7767d99c0e96f96a5bc711bf4df5aeabed3c85e033  run 2
+      BYTE-IDENTICAL
+
+  package-lock.json — STILL NOT INCLUDED, AND I WILL NOT FABRICATE ONE
+    A lockfile records resolved tarball URLs and SHA-512 integrity hashes
+    obtained from the registry. Without network access those values cannot be
+    computed. A hand-written lockfile would carry either absent or invented
+    integrity hashes, which is worse than no lockfile: npm would either reject
+    it or, if hashes were omitted, silently resolve a different tree while
+    LOOKING reproducible. That is a supply-chain hazard, not a formality.
+
+    What has been done instead, so the first install is as close to
+    deterministic as is possible offline:
+      - every version pinned exactly, no ranges anywhere
+      - .npmrc enforcing save-exact and engine-strict
+      - engines.node >= 20.19.0 declared
+
+    REQUIRED NEXT STEP (one command, on a networked machine):
+      npm install && git add package-lock.json && git commit -m "chore: lockfile"
+    With exact pins, that lockfile is reproducible by anyone who runs the same
+    command against the same registry.
+
+--------------------------------------------------------------------------------
+PHASE 4 STATUS
+--------------------------------------------------------------------------------
+  Blocked pending, in order:
+    1. npm install / typecheck / lint / test / build all green on a networked
+       machine, outputs recorded
+    2. package-lock.json committed
+    3. npm audit clean or accepted
+  Real customer data and public launch remain blocked regardless.
+
+================================================================================
+13. RESPONSE TO CODEX VERIFICATION REPORT (2026-07-19)
+================================================================================
+
+IMPORTANT: that report reviewed nested ZIP MD5 e4645750040ed12740fdaa6bd170b2ff.
+A corrected package was delivered AFTER it was written. Sequence:
+
+    e46457...  Phase 3 as submitted      <- Codex reviewed this
+    c91f10...  Revision 3 (SHA-256)      <- 13 errors fixed, eslint added,
+                                            versions pinned, deterministic pack
+    this ZIP   Revision 4                <- adds falsification evidence
+
+Every P0 in the report was already fixed in revision 3, before the report
+arrived. Verified line by line rather than asserted:
+
+  #1,2  states.tsx Card role="alert"        Card now accepts and forwards `role`
+                                            (ui.tsx:28-31). This was a real
+                                            accessibility bug — the prop was
+                                            silently dropped, so the error and
+                                            blocked panels had no alert role.
+  #3    transactions.ts:125 override         narrowing captured before the
+                                            closure as `wasCorrected` (:121-122)
+  #4    dashboard useMemo                    import is now { useState } only
+  #5,6  dashboard business, money            Transactions() no longer takes them
+  #7    dashboard business (Receipts)        same
+  #8-10 deductions EmptyState/ErrorState/    import trimmed to
+        LoadingState                         Button, Card, DisclosureNote,
+                                             PageHeader, Stat, StatusChip
+  #11   domain.ts ok                         removed from the core import
+  #12   domain.ts map index i                .map(([categoryKey, group]) => ...)
+  #13   transactions.ts ok                   removed from the core import
+
+  P1 lint      eslint.config.js added (ESLint 9 flat) plus @eslint/js,
+               typescript-eslint, eslint-plugin-react, eslint-plugin-react-hooks.
+               Encodes the architectural boundaries as rules. NOT RUN HERE —
+               eslint is not installable offline.
+
+  P1 lockfile  Still absent. See section 12 for why fabricating one is a
+               supply-chain hazard rather than a formality. Codex has already
+               GENERATED a valid package-lock.json during verification — that
+               file should be committed to the repository. Exact version pins
+               (0 caret ranges) and .npmrc save-exact make it reproducible.
+
+  P1 git       No commit id was supplied because this delivery is a ZIP, not a
+               repository. .gitignore and .gitattributes ship in the package;
+               initialise and commit on receipt, then quote the SHA.
+
+--------------------------------------------------------------------------------
+CORRECTION — MY ERROR COUNT WAS INFLATED, AND I SHOULD SAY SO
+--------------------------------------------------------------------------------
+Section 12 reports 24 errors found. Codex reports 13. Codex is right about the
+count that matters.
+
+The difference is my offline React shim (tools/react-shim.d.ts). It models the
+React API closely but not perfectly, and it over-reported roughly eleven items:
+
+  - `import React` used only as `React.ReactNode` was flagged unused. Under the
+    REAL @types/react a namespace-qualified type reference IS a use of the
+    binding, so those were not errors.
+  - Event handler parameters were flagged implicit-any. Under real types they
+    are contextually typed from onClick/onChange.
+  - Two variant-map index errors and one it.each parameter, same cause.
+
+Those eleven "fixes" are harmless and arguably better style — `import type` is
+what @typescript-eslint/consistent-type-imports requires anyway, and explicit
+handler types are not wrong. But they were not defects, and presenting 24 as if
+all were real overstated the finding. The 13 Codex identified were real; my
+shim found all 13 plus noise.
+
+The shim's value is that it found the 13 at all — previously nothing checked
+.tsx offline. Its limitation is now documented in this file and in the handoff.
+
+--------------------------------------------------------------------------------
+NEW EVIDENCE — FALSIFICATION SUITE (Codex remediation item 7)
+--------------------------------------------------------------------------------
+Executed. Full detail in FALSIFICATION_EVIDENCE.md. Baseline 134/0.
+
+  1  authorize() removed from confirm          132 /  2 red
+  2  scopeTo() returns all rows                127 /  7 red
+  3  isExportable filter dropped               132 /  2 red
+  4  export.create audit event deleted         133 /  1 red
+  5  "Possible" -> "Guaranteed deduction"      132 /  2 red
+  6  two guards removed from isGrantActive     134 /  0 red   <- see note
+  6b isGrantActive forced to return true       128 /  6 red
+  7  masking returns leading digits            130 /  4 red
+  8  expiry check alone removed                133 /  1 red
+
+  Restored: 134 / 0.
+
+  NOTE ON #6, reported because it initially looked like a hole. Removing the
+  first two guards from isGrantActive() changed nothing, because the function
+  ends with `return g.status === 'active' || g.status === 'accepted'` — a
+  revoked grant fails that too. The guards are redundant defence-in-depth, so
+  the falsification was incomplete, not the tests inadequate. Forcing the
+  function to return true (#6b) turned six tests red, including "revoking
+  access takes effect on the very next request". Removing only the expiry
+  check (#8) turned exactly one red, confirming that assertion is specific.
+
+  Reporting the intermediate result rather than only the one that worked.
+
+--------------------------------------------------------------------------------
+STATUS AGAINST THE REPORT'S REMAINING BLOCKERS
+--------------------------------------------------------------------------------
+  1. Fix all 13 TypeScript errors                 DONE, verified line by line
+  2. Successful npm run typecheck                 CANNOT RUN HERE. Offline
+                                                  equivalent covering every .tsx
+                                                  and both test files: EXIT 0
+  3. Successful npm run build + inspect dist/     CANNOT RUN HERE (no Vite)
+  4. Add ESLint config, make lint pass            CONFIG ADDED, NOT RUN
+  5. Include the generated lockfile               NEEDS THE FILE CODEX GENERATED
+  6. Re-run all 134 tests after fixes             DONE — 134 / 0
+  7. Run the falsification tests                  DONE — see above
+  8. Re-render and inspect the six UI states      DONE for the offline render:
+                                                  25 / 25 routes, 24 screenshots
+                                                  incl. loading, error, empty,
+                                                  blocked, permission_denied.
+                                                  NOT done from a production
+                                                  bundle, which requires item 3.
+
+Items 2, 3, 4 and 5 all require network. They are the reviewer's to close.
+
+================================================================================
+14. RESUBMISSION AGAINST THE SIX STATED REQUIREMENTS
+================================================================================
+
+  1. Corrected source                          INCLUDED
+        All 13 Codex P0 errors fixed and spot-checked in the extracted archive.
+        Offline typecheck of every .tsx and both test files: EXIT 0.
+
+  2. Generated package-lock.json in package    NOT INCLUDED — CANNOT BE
+        A lockfile records registry tarball URLs and SHA-512 integrity hashes.
+        This environment has no registry access, so those values cannot be
+        computed. A hand-written lockfile would carry absent or invented
+        hashes; the absent-hash case is worse than no lockfile, because npm
+        would resolve a different tree while the file made the install look
+        reproducible.
+        Codex GENERATED a valid package-lock.json during the 2026-07-19
+        verification (316 packages installed, 317 audited). That file is the
+        correct one to commit. Running tools/collect-evidence.sh regenerates it.
+        Mitigations shipped: 0 caret ranges anywhere, .npmrc save-exact=true
+        and engine-strict=true, engines.node >= 20.19.0.
+
+  3. Passing outputs for the six gates         PARTIAL — see below
+        install     NOT RUN (no network)          verifier
+        typecheck   NOT RUN as npm script; offline equivalent covering every
+                    .tsx and both test files: EXIT 0
+        134 tests   PASSING under an offline runner (27 suites, 134, 0 failed).
+                    Codex already confirmed 134/134 under real Vitest 3.2.7.
+        build       NOT RUN (no Vite)             verifier
+        lint        CONFIG ADDED, NOT RUN (eslint not installable)  verifier
+        audit       NOT RUN (no network)          verifier
+
+        NEW: tools/collect-evidence.sh produces all six, verbatim, in one run,
+        plus requirement 4. It EXITS NON-ZERO if any gate fails, so it cannot
+        report success on a broken build. Smoke-tested here: with no network it
+        correctly reported FAIL on all six and exited 1.
+        Also wired as `npm run evidence`.
+
+  4. Secret-scan results for generated dist/   BLOCKED ON 3 — SCRIPT PROVIDED
+        Requires a dist/, which requires a successful build, which requires
+        network. Section 7 of collect-evidence.sh scans for:
+          - credential-shaped strings (sk_live, AKIA…, ghp_…, xox…, PEM private
+            keys, service_role, JWT-shaped values)
+          - real-format identifiers (SSN, EIN, full PAN)
+          - prohibited tax claims
+          - verification scaffolding that must not ship (preview/, screenshots/,
+            tools/)
+
+  5. Updated handoff that does not mark Phase 3 delivered   DONE
+        CLAUDE_PHASE3_HANDOFF.md now opens with:
+          "STATUS: SUBMITTED FOR VERIFICATION — NOT DELIVERED, NOT APPROVED"
+        followed by a table of every open gate and who closes it, and an
+        explicit acknowledgement that the earlier "delivered" framing was wrong
+        because typecheck, build and lint all failed. A build that does not
+        compile is not a delivery, whatever the tests say.
+
+  6. Git commit SHA, or complete ZIP hash      ZIP HASH PROVIDED
+        This delivery is a ZIP, not a repository, so no commit exists. Both
+        formats are given because the verification tooling used MD5:
+
+          SHA-256 : see the delivery message — a hash cannot be embedded in
+          MD5     : the file it hashes without changing it. Both formats are
+                    quoted alongside the archive and reproducible with:
+                      sha256sum vntax-app-complete.zip
+                      md5sum    vntax-app-complete.zip
+          Entries : 103
+
+        The archive is deterministic — tools/pack.sh normalises mtimes, sorts
+        entries and strips platform extras. Packing twice yields byte-identical
+        output. .gitignore and .gitattributes ship in the package; initialise a
+        repository on receipt and quote the SHA so the next review is
+        commit-based rather than hash-based.
+
+--------------------------------------------------------------------------------
+WHAT CLOSING THIS TAKES
+--------------------------------------------------------------------------------
+  On the verification machine:
+
+      unzip vntax-app-complete.zip
+      cd vntax-app-complete
+      bash tools/collect-evidence.sh        # or: npm run evidence
+
+  Produces EVIDENCE.txt with requirements 3 and 4 in full, and generates the
+  package-lock.json for requirement 2. Exit code is the verdict.
+
+================================================================================
+15. RESPONSE TO file9 VERIFICATION — lint + dependency audit
+================================================================================
+
+Passed in file9 and unchanged here: typecheck, production build, 134/134 tests,
+production-bundle secret scan, lockfile generation.
+
+--------------------------------------------------------------------------------
+FAILURE 1 — lint, one error at src/features/dashboard/screens.tsx:202
+--------------------------------------------------------------------------------
+  Offending line:
+
+      next.has(id) ? next.delete(id) : next.add(id);
+
+  A ternary used purely for side effects; the result is discarded. Caught by
+  no-unused-expressions, and a fair catch — this is the shape that hides bugs,
+  because a mistyped branch is silently evaluated and thrown away.
+
+  FIX:
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+
+  Swept the whole source for the same pattern and for the other rules I can
+  check statically without eslint installed:
+
+      no-unused-expressions (ternary / && as statement)   none
+      no-console outside tests                            none
+      unused React imports                                none
+      eqeqeq                                              6 hits, all `== null`
+                                                          or `!= null`, which
+                                                          eqeqeq:"smart"
+                                                          explicitly permits
+
+  npm run lint still CANNOT be executed here — eslint is not installable
+  offline. This is a static sweep, not a lint run. The verifier closes it.
+
+--------------------------------------------------------------------------------
+FAILURE 2 — 1 critical + 5 high dependency paths. THIS ONE WAS MY DOING.
+--------------------------------------------------------------------------------
+  Every flagged package was pinned EXACTLY at the FLOOR of what had previously
+  been a caret range:
+
+      package             was      I pinned    required      resolved by Codex
+                                               minimum       in the FIRST run
+      vitest              ^3.2.4   3.2.4       >= 3.2.6      3.2.7  (clean)
+      @playwright/test    ^1.55.0  1.55.0      >= 1.55.1     -
+      postcss             ^8.5.6   8.5.6       >= 8.5.10     -
+      vite                ^7.1.5   7.1.5       -             7.3.6  (clean)
+      react-router-dom    ^7.9.1   7.9.1       -             -
+
+  ROOT CAUSE. In revision 3 I stripped every caret to make installs
+  deterministic. That froze each dependency at the lowest version its range
+  allowed. The caret ranges would have resolved to patched releases — Codex's
+  own first verification installed vitest 3.2.7 and vite 7.3.6 and reported
+  "found 0 vulnerabilities". My determinism change actively reintroduced
+  vulnerabilities that were already resolved.
+
+  It was also the wrong layer. Determinism is the LOCKFILE's job; that is what
+  a lockfile is for. Freezing package.json ranges does not add reproducibility
+  on top of a lockfile — it only removes the ability to pick up patches.
+
+  FIX
+    - carets restored across the board
+    - floors raised to the stated minimums:
+          vitest ^3.2.7, @playwright/test ^1.55.1, postcss ^8.5.10
+    - floors raised on the two flagged without a stated minimum, to versions
+      Codex itself resolved and audited clean:
+          vite ^7.3.6, typescript ^5.9.3
+    - react-router-dom left at ^7.9.1: the caret allows any 7.x, so npm will
+      resolve the newest patched release. If the advisory requires a specific
+      minimum, send the ID and I will raise the floor explicitly.
+    - overrides: esbuild ^0.25.0 (was pinned 0.25.0)
+
+    - .npmrc: save-exact=true REMOVED. That setting was the mechanism that
+      would have recreated this failure on the next `npm install <pkg>`.
+      engine-strict=true retained. Guidance added to use `npm ci`, which
+      installs strictly from the lockfile and fails if package.json disagrees.
+
+  GATE ADDED so this cannot recur silently:
+      "audit":  "npm audit --audit-level=moderate"
+      "verify": typecheck && lint && test && build && audit
+    collect-evidence.sh raised from --audit-level=low to moderate, and now
+    prints a RESOLVED VERSIONS table for the five packages so the audit result
+    is attributable to specific installed versions rather than to ranges.
+
+--------------------------------------------------------------------------------
+RE-VERIFIED AFTER BOTH FIXES
+--------------------------------------------------------------------------------
+    offline typecheck, every .tsx + both test files ....... EXIT 0
+    transpile all sources ................................ 0 syntax errors
+    server-render every route ............................ 25 / 25
+    test suites .......................................... 27 suites, 134, 0 failed
+    static lint sweep .................................... clean
+
+  Not runnable here, unchanged: npm install, npm run typecheck, npm run build,
+  npm run lint, npm audit. Run `bash tools/collect-evidence.sh` to produce all
+  of them plus the dist scan in one pass; it exits non-zero if any gate fails.
+
+================================================================================
+16. THE LOCKFILE — LAST REMAINING PACKAGING REQUIREMENT
+================================================================================
+
+REQUEST: "add the generated package-lock.json to the nested folder before
+creating the final ZIP."
+
+Two obstacles, one of which is new and matters more than the other.
+
+--------------------------------------------------------------------------------
+OBSTACLE 1 — the existing lockfile is now STALE and must not be reused
+--------------------------------------------------------------------------------
+  The lockfile generated during the earlier verification was produced against a
+  package.json that pinned:
+
+        vitest            3.2.4      <- the version the audit flagged
+        postcss           8.5.6      <- flagged
+        vite              7.1.5      <- flagged
+        @playwright/test  1.55.0     <- flagged
+        react-router-dom  7.9.1      <- flagged
+
+  Section 15 changed those to ^3.2.7, ^8.5.10, ^7.3.6, ^1.55.1, ^7.9.1.
+
+  Consequences of shipping the old lockfile with the corrected package.json:
+
+    npm ci     REFUSES — "package.json and package-lock.json are not in sync".
+    forced     Reinstalls the exact tree the audit rejected, while the presence
+               of a lockfile makes the install look reproducible and reviewed.
+
+  The second outcome is worse than having no lockfile at all. The lockfile must
+  be REGENERATED against the corrected package.json, not carried across.
+
+--------------------------------------------------------------------------------
+OBSTACLE 2 — it cannot be generated here
+--------------------------------------------------------------------------------
+  A lockfile records registry tarball URLs and SHA-512 integrity hashes. This
+  environment has no registry access, so those values do not exist to be
+  written. Position unchanged from sections 12 and 14: a hand-written lockfile
+  would carry absent or invented hashes, and npm would either reject it or
+  silently resolve a different tree.
+
+--------------------------------------------------------------------------------
+WHAT IS SHIPPED INSTEAD — tools/finalize-package.sh
+--------------------------------------------------------------------------------
+      bash tools/finalize-package.sh          # or: npm run finalize
+
+  One command on a networked machine. It:
+
+    1. Generates package-lock.json against the CORRECTED package.json
+         npm install --package-lock-only
+    2. Validates it is real, not fabricated
+         - lockfileVersion >= 3
+         - > 100 package entries
+         - EVERY resolved entry carries an integrity hash
+           (this is the check that catches a fabricated or truncated lockfile)
+    3. Confirms it is in sync
+         npm ci --dry-run must accept it
+    4. Verifies the five previously-vulnerable packages resolved ABOVE their
+       required floors, printing range -> resolved for each
+    5. Runs npm audit at --audit-level=moderate
+    6. Removes node_modules / dist / caches, then builds the deterministic ZIP
+       and prints SHA-256 and MD5
+
+  It EXITS NON-ZERO and REFUSES TO PRODUCE AN ARCHIVE if any check fails, so it
+  cannot package a broken or stale state.
+
+  Smoke-tested here. With no network it failed at step 1, exited 1, left no
+  package-lock.json behind and produced no archive — the correct behaviour:
+
+        1. Generating package-lock.json
+          FAIL  npm install --package-lock-only failed
+          npm error code E403 ... registry.npmjs.org
+        script exit code: 1
+        no package-lock.json left behind
+
+--------------------------------------------------------------------------------
+STATE OF THE PACKAGING REQUIREMENT
+--------------------------------------------------------------------------------
+  package-lock.json in the nested folder      NOT DONE — requires network
+  Regeneration against corrected package.json AUTOMATED (finalize-package.sh)
+  Validation that it is genuine                AUTOMATED
+  In-sync check                                AUTOMATED
+  Vulnerable-floor check                        AUTOMATED
+  Deterministic repack with the lockfile        AUTOMATED
+
+  The archive delivered here is complete except for the lockfile. Running the
+  script on the verification machine produces the final archive with the
+  lockfile inside, and prints the hashes to quote.
+
+================================================================================
+END OF BUILD_RESULTS.txt
+================================================================================
+
+================================================================================
+11. PHASE 3 — FUNCTIONAL INTEGRATION BUILD
+================================================================================
+Generated: 2026-07-19 05:11:21 UTC
+
+--- 11.1  npm install ---------------------------------------------------------
+npm error code E403
+npm error 403 403 Forbidden - GET https://registry.npmjs.org/@playwright%2ftest
+npm error 403 In most cases, you or one of your dependencies are requesting
+npm error 403 a package version that is forbidden by your security policy, or
+npm error 403 on a server you do not have access to.
+npm error A complete log of this run can be found in: /home/claude/.npm/_logs/2026-07-19T05_11_21_132Z-debug-0.log
+EXIT CODE: 1  (network disabled — see section 1)
+
+--- 11.2  strict typecheck, non-React modules ---------------------------------
+        EXIT CODE: 0   (0 = clean)
+
+--- 11.3  transpile all sources (services + state + wired screens) ------------
+        Files emitted: 24   (0 syntax errors)
+
+--- 11.4  test suites ----------------------------------------------------------
+TOTAL SUITES  : 27
+TOTAL PASSED  : 134
+TOTAL FAILED  : 0
+   • bilingual — both locales are equals, not fallbacks
+   • compliance — product boundary language
+   • permissions — role boundaries
+   • permissions — grant scoping
+   • permissions — admin boundary
+   • masking — last four only, never the leading digits
+   • export gate — nothing unconfirmed can be exported
+   • fixture safety — nothing resembling real identifiers
+   • determinism — same seed, same data
+   • edge cases are seeded, so empty and error states are reachable
+   • locality — filing follows the address, not the county
+   • tax engine boundary
+   • alerts are actionable or they do not exist
+   • state machine — every service result maps to a UI state
+   • fault injection reaches the UI as the right state
+   • data isolation — no cross-business access is possible
+   • permissions at the service boundary, not just the UI
+   • categorization workflow
+   • receipt workflow
+   • restaurant workflow
+   • nail salon workflow
+   • export gate
+   • audit — exports and sharing are always recorded
+   • professional sharing
+   • quarterly planning stays planning
+   • masking is applied to stored data, not just display
+   • store isolation between tests
+        EXIT CODE: 0
+
+--- 11.5  server-render every route including state variants ------------------
+rewrote 16 files
+rendered 25/25
+        EXIT CODE: 0
+
+--- 11.6  Chromium render, desktop + mobile ------------------------------------
+shots: 24
+page errors: none
+        EXIT CODE: 0
+
+--- 11.7  security sweep -------------------------------------------------------
+secrets / keys / tokens:
+  CLEAN
+SSN-format:
+  CLEAN
+EIN-format:
+  CLEAN
+.env / *.pem / *.key:
+  CLEAN
+forbidden tax claims:
+src/tests/suite.test.ts:    'guaranteed deduction', 'guaranteed tax savings', 'guaranteed savings',
+src/tests/suite.test.ts:    'irs approved', 'fully deductible', 'automatically eligible', 'guaranteed refund',
+src/tests/suite.test.ts:    'cpa approval required',
+unused React imports:
+  CLEAN
+unscoped store reads:
+  src/services/domain.ts:358:      grant: resolveGrant(db().grants, businessId, userId),
+
+--- 11.8  Phase 3 additions ----------------------------------------------------
+  NOTE ON THE TWO SWEEP HITS ABOVE — both are correct, verified by hand:
+
+    1. "forbidden tax claims" matches in src/tests/suite.test.ts
+       Those lines ARE the forbidden-phrase list inside the test that asserts
+       the phrases appear nowhere in the product. The test must contain the
+       strings in order to search for them. No product copy matches.
+       Confirm with:  grep -riE "guaranteed deduction" src --exclude-dir=tests
+
+    2. "unscoped store read" at src/services/domain.ts:358
+       resolveGrant(db().grants, businessId, userId)
+       resolveGrant() filters by businessId internally (see core.ts) — it is a
+       scoped accessor with a different signature, not a bypass. Every other
+       data read in the service layer passes through scopeTo().
+
+  services  : 5 modules
+  new tests : services.test.ts (60 tests, 14 suites)
+  routes SSR: 25 (was 20 — added loading/error/manager/denied/blocked)
+  docs      : CLAUDE_PHASE3_HANDOFF.md, CODEX_VERIFICATION_CHECKLIST.md
+  lockfile  : NOT GENERATED — requires npm install. Fabricating one would
+              ship invalid integrity hashes. Run npm install and commit it.
