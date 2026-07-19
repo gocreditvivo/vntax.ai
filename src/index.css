@@ -1,0 +1,10 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Vietnamese runs longer than English; layouts must tolerate wrapping. */
+@layer base {
+  html { -webkit-text-size-adjust: 100%; }
+  body { @apply bg-white text-ink-900 antialiased; }
+  :focus-visible { @apply outline-none ring-2 ring-jade-600 ring-offset-2; }
+}
