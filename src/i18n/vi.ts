@@ -69,9 +69,10 @@ export const vi: Dict = {
   legal: {
     promise: 'Chúng tôi sắp xếp sổ sách kinh doanh và giúp anh chị sẵn sàng cho mùa thuế.',
     disclosure:
-      'Chúng tôi cung cấp phần mềm tự động hóa và sắp xếp thông tin thuế. Chúng tôi không ' +
-      'cung cấp dịch vụ pháp lý, kế toán hoặc tư vấn thuế chuyên môn. Việc áp dụng thuế và ' +
-      'điều kiện khấu trừ phụ thuộc vào từng trường hợp và quy định hiện hành.',
+      'Chúng tôi cung cấp phần mềm sắp xếp thuế và sổ sách. Chúng tôi không cung cấp dịch vụ ' +
+      'pháp lý, kế toán hoặc tư vấn thuế chuyên môn. Không phải đơn vị nộp hồ sơ điện tử được ' +
+      'IRS uỷ quyền. Việc áp dụng thuế và điều kiện khấu trừ phụ thuộc vào từng trường hợp và ' +
+      'quy định hiện hành.',
     planningOnly: 'Chỉ là ước tính để dự trù',
     planningBody:
       'Số thuế phải đóng sau cùng tùy thuộc vào thông tin đầy đủ và quy định hiện hành.',
@@ -109,11 +110,14 @@ export const vi: Dict = {
   },
 
   marketing: {
+    trustBadge: 'Song ngữ · Việt–Anh · Dành cho nhà hàng và tiệm nail',
     heroTitle: 'Tự động hóa thuế thông minh cho nhà hàng và tiệm nail',
     heroBody:
       'Theo dõi chi phí. Sắp xếp hóa đơn. Tìm các khoản khấu trừ có thể áp dụng. Sẵn sàng cho mùa thuế.',
     ctaPrimary: 'Dùng thử miễn phí',
     ctaSecondary: 'Xem cách hoạt động',
+    productBoundary:
+      'Phần mềm sắp xếp sổ sách. Không phải công ty kế toán, và không thay thế được kế toán.',
     pickIndustry: 'Anh chị đang làm nghề nào?',
     restaurantCard: 'Nhà hàng',
     restaurantCardBody: 'Giá vốn thực phẩm, phí app giao đồ ăn, lương, tiền tip, hồ sơ thuế bán hàng',
@@ -429,3 +433,4 @@ export const vi: Dict = {
     business_expense: { name: 'Business expense', gloss: 'Chi phí kinh doanh' },
   },
 };
+
