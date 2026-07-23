@@ -14,6 +14,9 @@ export function Home() {
       {/* hero */}
       <section className="bg-gradient-to-b from-jade-800 to-jade-900 px-5 py-20 text-white">
         <div className="mx-auto max-w-6xl">
+          <p className="mb-5 inline-flex rounded-full border border-white/25 bg-white/10 px-3 py-1.5 text-sm text-white/85">
+            {t.marketing.trustBadge}
+          </p>
           <h1 className="max-w-3xl font-display text-4xl font-semibold leading-tight sm:text-5xl">
             {t.marketing.heroTitle}
           </h1>
@@ -32,6 +35,9 @@ export function Home() {
               {t.marketing.ctaSecondary}
             </Link>
           </div>
+          <p className="mt-5 max-w-2xl text-sm text-white/60">
+            {t.marketing.productBoundary}
+          </p>
           <p className="mt-5 text-sm text-white/60">{t.legal.promise}</p>
         </div>
       </section>
@@ -289,3 +295,4 @@ function LangCard({ label, note, onClick }: { label: string; note: string; onCli
     </button>
   );
 }
+
