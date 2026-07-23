@@ -61,9 +61,9 @@ export const en = {
   legal: {
     promise: 'We organize your business finances and help you prepare for tax time.',
     disclosure:
-      'We provide tax organization and automation software. We do not provide legal, ' +
-      'accounting, or professional tax advice. Tax treatment and eligibility depend on ' +
-      'individual facts and applicable law.',
+      'We provide tax organization and bookkeeping software. We do not provide legal, ' +
+      'accounting, or professional tax advice. Not an IRS-authorized e-file provider. ' +
+      'Tax treatment and eligibility depend on individual facts and applicable law.',
     planningOnly: 'Planning estimate only',
     planningBody:
       'Final tax liability depends on complete information and applicable law.',
@@ -101,11 +101,14 @@ export const en = {
   },
 
   marketing: {
+    trustBadge: 'Bilingual · Vietnamese and English · Built for restaurants and nail salons',
     heroTitle: 'Smart tax automation for restaurants and nail salons',
     heroBody:
       'Track expenses. Organize receipts. Find possible deductions. Stay ready for tax time.',
     ctaPrimary: 'Start free',
     ctaSecondary: 'See how it works',
+    productBoundary:
+      'Software that organizes your books. Not a CPA firm, and not a substitute for one.',
     pickIndustry: 'Which describes your business?',
     restaurantCard: 'Restaurant',
     restaurantCardBody: 'Food cost, delivery fees, payroll, tips, sales tax records',
@@ -436,3 +439,4 @@ type Widen<T> = T extends string ? string
   : T;
 
 export type Dict = Widen<typeof en>;
+
