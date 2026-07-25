@@ -6,6 +6,7 @@ import { BUSINESSES } from '../mocks/fixtures';
 import { sharingService, type Caller } from '../services';
 import type { Industry, Locale, Role } from '../types';
 import { Home, SignUp, Login, Onboarding } from '../features/marketing/screens';
+import { ChatGuide } from '../features/chat/ChatGuide';
 import { Dashboard, Transactions, Receipts } from '../features/dashboard/screens';
 import {
   Deductions, Quarterly, Documents, ExportCenter, Sharing,
@@ -28,6 +29,13 @@ function Routed({ industry, role, forcedState }: { industry: Industry; role: Rol
   if (path === '/' || path.startsWith('/#')) return <Home />;
   if (path === '/auth/sign-up') return <SignUp />;
   if (path === '/auth/login') return <Login />;
+  if (path === '/guide') {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-cream px-4 py-8">
+        <ChatGuide onComplete={() => {}} />
+      </div>
+    );
+  }
   if (path.startsWith('/onboarding/')) {
     return <Onboarding step={path.split('/')[2] ?? 'language'} onIndustry={() => {}} />;
   }
