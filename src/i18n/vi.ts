@@ -12,8 +12,8 @@ import type { Dict } from './en';
 
 export const vi: Dict = {
   common: {
-    appName: 'Sổ Sạch',
-    tagline: 'Tự động hóa thuế thông minh cho nhà hàng và tiệm nail',
+    appName: 'VNTax',
+    tagline: 'Sổ sách và sắp xếp thuế cho nhà hàng và tiệm nail',
     continue: 'Tiếp tục',
     back: 'Quay lại',
     save: 'Lưu',

@@ -4,8 +4,8 @@
  */
 export const en = {
   common: {
-    appName: 'Sổ Sạch',
-    tagline: 'Smart tax automation for restaurants and nail salons',
+    appName: 'VNTax',
+    tagline: 'Bookkeeping and tax organization for restaurants and nail salons',
     continue: 'Continue',
     back: 'Back',
     save: 'Save',
