@@ -13,7 +13,7 @@
 
 // ─── shared ────────────────────────────────────────────────────────────────
 
-export type Locale = 'en' | 'vi';
+export type Locale = 'en' | 'vi' | 'es';
 export type ISODate = string;      // YYYY-MM-DD
 export type ISODateTime = string;  // RFC 3339
 export type Money = number;        // USD; negative = money out

@@ -28,6 +28,7 @@ export const en = {
     language: 'Language',
     english: 'English',
     vietnamese: 'Tiếng Việt',
+    spanish: 'Español',
   },
 
   states: {

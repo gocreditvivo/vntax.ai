@@ -36,6 +36,7 @@ export const vi: Dict = {
     language: 'Ngôn ngữ',
     english: 'English',
     vietnamese: 'Tiếng Việt',
+    spanish: 'Español',
   },
 
   states: {
