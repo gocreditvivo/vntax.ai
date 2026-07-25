@@ -17,6 +17,8 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useI18n } from '../../i18n';
 import type { Locale } from '../../types';
+import { TAX_BRAIN, ROUTE_TO_HUMAN } from './taxBrain';
+import type { TaxTermKey, ScriptLocale as BrainLocale } from './taxBrain';
 
 type ReplyStyle = 'default' | 'snap';
 
@@ -27,7 +29,7 @@ interface Reply {
 }
 
 interface LearnChip {
-  key: keyof typeof GLOSSARY;
+  key: TaxTermKey;
   label: string;
 }
 
@@ -40,60 +42,7 @@ interface Step {
 type ScriptLocale = 'en' | 'vi';
 
 // glossary popups: plain-language, IRS-sourced, no advice
-const GLOSSARY = {
-  form1099: {
-    emoji: '\u{1F4C4}',
-    en: {
-      title: 'A 1099 is a form',
-      body: 'A company sends it to you and the IRS to show what they paid you during the year. Drivers and contractors usually get one.',
-      source: 'Source: IRS \u2014 About Form 1099',
-    },
-    vi: {
-      title: '1099 l\u00E0 m\u1ED9t m\u1EABu \u0111\u01A1n',
-      body: 'C\u00F4ng ty g\u1EEDi cho b\u1EA1n v\u00E0 IRS \u0111\u1EC3 cho bi\u1EBFt h\u1ECD \u0111\u00E3 tr\u1EA3 b\u1EA1n bao nhi\u00EAu trong n\u0103m. T\u00E0i x\u1EBF v\u00E0 th\u1EA7u kho\u00E1n th\u01B0\u1EDDng nh\u1EADn \u0111\u01B0\u1EE3c m\u1ED9t t\u1EDD.',
-      source: 'Ngu\u1ED3n: IRS \u2014 About Form 1099',
-    },
-  },
-  formW2: {
-    emoji: '\u{1F4CB}',
-    en: {
-      title: 'A W-2 is from your employer',
-      body: 'From a regular job. It shows your pay and the tax already taken out for you.',
-      source: 'Source: IRS \u2014 About Form W-2',
-    },
-    vi: {
-      title: 'W-2 l\u00E0 t\u1EEB ch\u1EE7 c\u1EE7a b\u1EA1n',
-      body: 'T\u1EEB m\u1ED9t c\u00F4ng vi\u1EC7c th\u01B0\u1EDDng xuy\u00EAn. N\u00F3 cho bi\u1EBFt ti\u1EC1n l\u01B0\u01A1ng v\u00E0 ti\u1EC1n thu\u1EBF \u0111\u00E3 \u0111\u01B0\u1EE3c tr\u1EEB gi\u00FAp b\u1EA1n.',
-      source: 'Ngu\u1ED3n: IRS \u2014 About Form W-2',
-    },
-  },
-  expense: {
-    emoji: '\u{1F9FE}',
-    en: {
-      title: 'A business expense',
-      body: 'Money you spend to run your work \u2014 supplies, gas, tools. Keeping the receipts helps when it is time to organize.',
-      source: 'Source: IRS \u2014 Publication 535',
-    },
-    vi: {
-      title: 'Chi ph\u00ED kinh doanh',
-      body: 'Ti\u1EC1n b\u1EA1n chi \u0111\u1EC3 l\u00E0m vi\u1EC7c \u2014 v\u1EADt t\u01B0, x\u0103ng, d\u1EE5ng c\u1EE5. Gi\u1EEF bi\u00EAn lai s\u1EBD gi\u00FAp \u00EDch khi s\u1EAFp x\u1EBFp.',
-      source: 'Ngu\u1ED3n: IRS \u2014 Publication 535',
-    },
-  },
-  quarterly: {
-    emoji: '\u{1F4C5}',
-    en: {
-      title: 'Why a few times a year?',
-      body: 'When no employer takes tax out for you, the IRS asks you to pay a little every few months instead of once. We track the dates for you.',
-      source: 'Source: IRS \u2014 Estimated Taxes',
-    },
-    vi: {
-      title: 'V\u00EC sao v\u00E0i l\u1EA7n m\u1ED9t n\u0103m?',
-      body: 'Khi kh\u00F4ng c\u00F3 ch\u1EE7 tr\u1EEB thu\u1EBF gi\u00FAp b\u1EA1n, IRS y\u00EAu c\u1EA7u b\u1EA1n \u0111\u00F3ng m\u1ED9t \u00EDt m\u1ED7i v\u00E0i th\u00E1ng thay v\u00EC m\u1ED9t l\u1EA7n. Ch\u00FAng t\u00F4i theo d\u00F5i ng\u00E0y gi\u00FAp b\u1EA1n.',
-      source: 'Ngu\u1ED3n: IRS \u2014 Estimated Taxes',
-    },
-  },
-} as const;
+// Chip keys now reference the shared TAX_BRAIN (see taxBrain.ts).
 
 // the conversation script
 const CHAT_SCRIPT: Record<ScriptLocale, Step[]> = {
@@ -109,7 +58,7 @@ const CHAT_SCRIPT: Record<ScriptLocale, Step[]> = {
     },
     {
       bot: 'Great \u2014 I help a lot of salon owners. \u{1F485} How do most of your payments come in?',
-      learn: { key: 'form1099', label: "What's a 1099?" },
+      learn: { key: 'form1099nec', label: "What's a 1099?" },
       replies: [
         { emoji: '\u{1F4B3}', label: 'Card or app payments' },
         { emoji: '\u{1F4C4}', label: 'A company pays me' },
@@ -156,7 +105,7 @@ const CHAT_SCRIPT: Record<ScriptLocale, Step[]> = {
     },
     {
       bot: 'Tuy\u1EC7t \u2014 t\u00F4i gi\u00FAp r\u1EA5t nhi\u1EC1u ch\u1EE7 ti\u1EC7m nail. \u{1F485} Ph\u1EA7n l\u1EDBn ti\u1EC1n c\u1EE7a b\u1EA1n \u0111\u1EBFn b\u1EB1ng c\u00E1ch n\u00E0o?',
-      learn: { key: 'form1099', label: '1099 l\u00E0 g\u00EC?' },
+      learn: { key: 'form1099nec', label: '1099 l\u00E0 g\u00EC?' },
       replies: [
         { emoji: '\u{1F4B3}', label: 'Th\u1EBB ho\u1EB7c app' },
         { emoji: '\u{1F4C4}', label: 'M\u1ED9t c\u00F4ng ty tr\u1EA3 t\u00F4i' },
@@ -217,7 +166,7 @@ export function ChatGuide({ onComplete }: { onComplete?: () => void }) {
   const [bubbles, setBubbles] = useState<Bubble[]>([]);
   const [step, setStep] = useState(0);
   const [typing, setTyping] = useState(false);
-  const [popup, setPopup] = useState<keyof typeof GLOSSARY | null>(null);
+  const [popup, setPopup] = useState<TaxTermKey | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -263,7 +212,8 @@ export function ChatGuide({ onComplete }: { onComplete?: () => void }) {
   const current = step < script.length ? script[step] : null;
   const showReplies =
     !typing && current !== null && bubbles.length > 0 && bubbles[bubbles.length - 1].from === 'bot';
-  const g = popup ? GLOSSARY[popup][sl] : null;
+  const brainLocale: BrainLocale = sl;
+  const g = popup ? TAX_BRAIN[popup][brainLocale] : null;
 
   return (
     <div className="mx-auto flex h-[680px] w-full max-w-md flex-col overflow-hidden rounded-3xl border border-line bg-[#F7FAF8] shadow-xl">
@@ -343,9 +293,12 @@ export function ChatGuide({ onComplete }: { onComplete?: () => void }) {
           onClick={() => setPopup(null)}
         >
           <div className="w-full max-w-md rounded-t-3xl bg-white p-6" onClick={(e) => e.stopPropagation()}>
-            <div className="text-3xl">{GLOSSARY[popup].emoji}</div>
+            <div className="text-3xl">{TAX_BRAIN[popup].emoji}</div>
             <h4 className="mt-2 text-xl font-bold text-ink-900">{g.title}</h4>
             <p className="mt-2 text-ink-700">{g.body}</p>
+            <p className="mt-3 rounded-xl border border-jade-100 bg-jade-50 px-3 py-2 text-sm text-jade-800">
+              {ROUTE_TO_HUMAN[brainLocale]}
+            </p>
             <p className="mt-3 text-xs text-ink-500">{g.source}</p>
             <button
               type="button"
