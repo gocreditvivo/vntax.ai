@@ -487,7 +487,7 @@ export const ESTIMATES: QuarterlyEstimate[] = [
         sourceReference: 'IRS Schedule SE', ruleStatus: 'verified' },
     ],
     warnings: [],
-    unsupported: ['income_tax_brackets_unverified'],
+    unsupported: ['income_tax_brackets'],
     computedAt: '2026-07-18T06:10:00Z',
   },
   {
@@ -507,7 +507,7 @@ export const ESTIMATES: QuarterlyEstimate[] = [
         sourceReference: 'IRS Schedule SE', ruleStatus: 'verified' },
     ],
     warnings: [],
-    unsupported: ['income_tax_brackets_unverified'],
+    unsupported: ['income_tax_brackets'],
     computedAt: '2026-07-18T06:10:00Z',
   },
 ];

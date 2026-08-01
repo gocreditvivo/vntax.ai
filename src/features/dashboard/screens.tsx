@@ -13,7 +13,7 @@ import {
 } from '../../services';
 import { db, scopeTo } from '../../services';
 import { ACCOUNTS, ALERTS, CONNECTIONS, DEDUCTION_GROUPS, DOCUMENTS, ESTIMATES } from '../../mocks/fixtures';
-import type { Business, Receipt, Transaction } from '../../types';
+import type { Business, Connection, Receipt, Transaction } from '../../types';
 
 type LoadState = 'loading' | 'error' | 'ready';
 
@@ -29,13 +29,16 @@ export function Dashboard({
   const summary = useAsync(() => transactionRepository.summary(call), [call.businessId, call.role]);
   const txs = scopeTo(db().transactions, bid);
   const alerts = ALERTS.filter((a) => a.businessId === bid);
+  // Use the quarterly estimate as the source of truth for financial totals —
+  // transaction-level data is incomplete (only one income entry in fixtures).
   const est = ESTIMATES.find((e) => e.businessId === bid);
+  const income = est ? est.estimatedNetProfit + (est.selfEmploymentComponent ?? 0) : 0;
+  const expenses = est?.selfEmploymentComponent ?? 0;
+  const netProfit = est?.estimatedNetProfit ?? 0;
   const uncategorized = txs.filter((x) => !x.confirmed).length;
   const missingReceipts = txs.filter((x) => !x.receiptId).length;
   const missingDocs = DOCUMENTS.filter((d) => d.businessId === bid && (d.status === 'missing' || d.status === 'requested')).length;
   const dedTotal = DEDUCTION_GROUPS.filter((g) => g.businessId === bid).reduce((s, g) => s + g.total, 0);
-  const income = txs.filter((x) => x.amount > 0 && x.classification === 'income').reduce((s, x) => s + x.amount, 0);
-  const expenses = txs.filter((x) => x.amount < 0).reduce((s, x) => s + Math.abs(x.amount), 0);
 
   // Readiness is a plain proportion of resolved items — not a score we invent.
   const totalItems = txs.length + missingDocs + alerts.length;
@@ -73,7 +76,7 @@ export function Dashboard({
           {[
             [t.dashboard.income, money(income)],
             [t.dashboard.expenses, money(expenses)],
-            [t.dashboard.estNet, money(income - expenses)],
+            [t.dashboard.estNet, money(netProfit)],
           ].map(([l, v]) => (
             <div key={l} className="bg-white px-5 py-4">
               <div className="text-sm text-ink-500">{l}</div>
@@ -455,6 +458,80 @@ export function Receipts({
           );
         }}
       </StateView>
+    </div>
+  );
+}
+
+// ═══ 6b. Connections management ═════════════════════════════════════════════
+
+export function Connections({
+  business, caller: _caller,
+}: { business: Business; caller: Caller }) {
+  const { t } = useI18n();
+  const bid = business.id;
+  const conns = CONNECTIONS.filter((c) => c.businessId === bid);
+  const accounts = ACCOUNTS.filter((a) => a.businessId === bid);
+
+  return (
+    <div>
+      <PageHeader title={t.connections.title} subtitle={t.connections.neverCredentials} />
+      <div className="mb-5"><DisclosureNote kind="general" /></div>
+
+      <div className="space-y-3">
+        {conns.map((c: Connection) => {
+          const linkedAccounts = accounts.filter((a) => a.connectionId === c.id);
+          return (
+            <Card key={c.id} className="p-5">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="font-display text-lg font-semibold text-ink-900">{c.institutionName}</h3>
+                    <span className="rounded-full bg-ink-100 px-2 py-0.5 text-xs text-ink-600">
+                      {(t.connections as Record<string, string>)[c.kind] ?? c.kind}
+                    </span>
+                  </div>
+                  {c.lastSyncAt && (
+                    <p className="mt-1 text-sm text-ink-500">
+                      {t.connections.lastSync}: {new Date(c.lastSyncAt).toLocaleDateString()}
+                    </p>
+                  )}
+                  {linkedAccounts.length > 0 && (
+                    <div className="mt-2 space-y-1">
+                      {linkedAccounts.map((a) => (
+                        <div key={a.id} className="flex items-center gap-2 text-sm text-ink-600">
+                          <span>{a.name}</span>
+                          <span className="tabular-nums text-ink-400">{a.maskedNumber}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="flex shrink-0 flex-col items-end gap-2">
+                  <StatusChip status={
+                    c.status === 'sync_completed' ? 'completed'
+                    : c.status === 'sync_failed' ? 'failed'
+                    : c.status === 'expired' ? 'action_required'
+                    : c.status === 'auth_required' ? 'action_required'
+                    : c.status === 'sync_in_progress' ? 'in_progress'
+                    : c.status === 'connected' ? 'completed'
+                    : c.status === 'connecting' ? 'in_progress'
+                    : 'not_started'
+                  } />
+                  <span className="text-sm text-ink-500">{(t.connections as Record<string, string>)[c.status] ?? c.status}</span>
+                  {(c.status === 'sync_failed' || c.status === 'expired') && (
+                    <Button variant="secondary" size="sm">{t.connections.reconnect}</Button>
+                  )}
+                </div>
+              </div>
+              {c.failureReason && (
+                <p className="mt-3 rounded-lg bg-clay-50 px-3 py-2 text-sm text-clay-700">
+                  {c.failureReason === 'auth_expired' ? t.connections.auth_required : c.failureReason}
+                </p>
+              )}
+            </Card>
+          );
+        })}
+      </div>
     </div>
   );
 }

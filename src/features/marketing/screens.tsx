@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useI18n, FormName } from '../../i18n';
 import { Link, useNav } from '../../app/router';
+import { setSession } from '../../app/auth';
 import { MarketingLayout, AuthLayout, OnboardingLayout } from '../../layouts';
 import { Button, Card, Field, Input, DisclosureNote } from '../../components/ui';
 import type { EntityType, Industry } from '../../types';
@@ -115,13 +116,13 @@ export function SignUp() {
     <AuthLayout>
       <Card className="p-7">
         <h1 className="mb-6 font-display text-2xl font-semibold">{t.auth.signUpTitle}</h1>
-        <Field id="name" label={t.auth.ownerName}><Input id="name" defaultValue="Dũng Nguyễn" /></Field>
-        <Field id="email" label={t.auth.email}><Input id="email" type="email" defaultValue="dung@example.com" /></Field>
+        <Field id="name" label={t.auth.ownerName}><Input id="name" /></Field>
+        <Field id="email" label={t.auth.email}><Input id="email" type="email" /></Field>
         <Field id="phone" label={t.auth.phone} hint={t.auth.mfaNote}>
-          <Input id="phone" type="tel" defaultValue="(703) 555-0142" />
+          <Input id="phone" type="tel" />
         </Field>
-        <Field id="pw" label={t.auth.password}><Input id="pw" type="password" defaultValue="••••••••••" /></Field>
-        <Button className="w-full" onClick={() => navigate('/onboarding/language')}>
+        <Field id="pw" label={t.auth.password}><Input id="pw" type="password" /></Field>
+        <Button className="w-full" onClick={() => { setSession(); navigate('/onboarding/language'); }}>
           {t.common.continue}
         </Button>
         <p className="mt-5 text-center text-sm text-ink-500">
@@ -140,9 +141,9 @@ export function Login() {
     <AuthLayout>
       <Card className="p-7">
         <h1 className="mb-6 font-display text-2xl font-semibold">{t.auth.loginTitle}</h1>
-        <Field id="lemail" label={t.auth.email}><Input id="lemail" type="email" defaultValue="dung@example.com" /></Field>
-        <Field id="lpw" label={t.auth.password}><Input id="lpw" type="password" defaultValue="••••••••••" /></Field>
-        <Button className="w-full" onClick={() => navigate('/app/dashboard')}>{t.common.signIn}</Button>
+        <Field id="lemail" label={t.auth.email}><Input id="lemail" type="email" /></Field>
+        <Field id="lpw" label={t.auth.password}><Input id="lpw" type="password" /></Field>
+        <Button className="w-full" onClick={() => { setSession(); navigate('/app/dashboard'); }}>{t.common.signIn}</Button>
         <p className="mt-5 text-center text-sm text-ink-500">
           {t.auth.noAccount}{' '}
           <Link to="/auth/sign-up" className="font-medium text-jade-700 underline">{t.common.signUp}</Link>
@@ -193,23 +194,23 @@ export function Onboarding({
 
       {step === 'owner' && (
         <Card className="p-6">
-          <Field id="oname" label={t.auth.ownerName}><Input id="oname" defaultValue="Dũng Nguyễn" /></Field>
-          <Field id="ophone" label={t.auth.phone}><Input id="ophone" defaultValue="(703) 555-0142" /></Field>
+          <Field id="oname" label={t.auth.ownerName}><Input id="oname" /></Field>
+          <Field id="ophone" label={t.auth.phone}><Input id="ophone" /></Field>
           <Button className="w-full" onClick={() => next('business')}>{t.common.continue}</Button>
         </Card>
       )}
 
       {step === 'business' && (
         <Card className="p-6">
-          <Field id="bname" label={t.onboarding.businessName}><Input id="bname" defaultValue="Phở Bình Minh LLC" /></Field>
-          <Field id="dba" label={t.onboarding.dbaName}><Input id="dba" defaultValue="Phở Bình Minh" /></Field>
+          <Field id="bname" label={t.onboarding.businessName}><Input id="bname" /></Field>
+          <Field id="dba" label={t.onboarding.dbaName}><Input id="dba" /></Field>
           <Field id="addr" label={t.onboarding.address} hint={t.onboarding.localityNote}>
-            <Input id="addr" defaultValue="6763 Wilson Blvd" />
+            <Input id="addr" />
           </Field>
           <div className="grid gap-3 sm:grid-cols-3">
-            <Field id="city" label={t.onboarding.city}><Input id="city" defaultValue="Falls Church" /></Field>
-            <Field id="state" label={t.onboarding.state}><Input id="state" defaultValue="VA" /></Field>
-            <Field id="zip" label={t.onboarding.postal}><Input id="zip" defaultValue="22044" /></Field>
+            <Field id="city" label={t.onboarding.city}><Input id="city" /></Field>
+            <Field id="state" label={t.onboarding.state}><Input id="state" /></Field>
+            <Field id="zip" label={t.onboarding.postal}><Input id="zip" /></Field>
           </div>
           <Button className="w-full" onClick={() => next('industry')}>{t.common.continue}</Button>
         </Card>
@@ -277,7 +278,7 @@ export function Onboarding({
         <Card className="p-8 text-center">
           <div className="mb-3 text-4xl" aria-hidden="true">✓</div>
           <p className="mb-6 text-ink-500">{t.onboarding.completeBody}</p>
-          <Button onClick={() => navigate('/app/dashboard')}>{t.nav.dashboard}</Button>
+          <Button onClick={() => { setSession(); navigate('/app/dashboard'); }}>{t.nav.dashboard}</Button>
         </Card>
       )}
     </OnboardingLayout>

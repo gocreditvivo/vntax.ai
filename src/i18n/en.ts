@@ -72,6 +72,10 @@ export const en = {
     reviewRecommended: 'Professional review recommended',
     dependsOnRecords: 'Results depend on complete and accurate records',
     notReviewed: 'Not yet reviewed',
+    stateBoundary:
+      'This software addresses federal tax organization only. State and local filing ' +
+      'requirements vary by jurisdiction. Consult your state tax agency or a qualified ' +
+      'professional for state-specific obligations.',
   },
 
   status: {
@@ -99,6 +103,7 @@ export const en = {
     restaurant: 'Restaurant',
     salon: 'Nail salon',
     settings: 'Settings',
+    connections: 'Connections',
   },
 
   marketing: {

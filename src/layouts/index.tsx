@@ -103,6 +103,7 @@ const NAV_ITEMS = (industry: Industry) => [
   { to: '/app/dashboard', key: 'dashboard' as const },
   { to: '/app/transactions', key: 'transactions' as const },
   { to: '/app/receipts', key: 'receipts' as const },
+  { to: '/app/connections', key: 'connections' as const },
   { to: '/app/deductions', key: 'deductions' as const },
   { to: '/app/quarterly', key: 'quarterly' as const },
   ...(industry === 'restaurant'

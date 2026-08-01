@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { I18nProvider } from '../i18n';
 import { NavProvider, useNav } from './router';
+import { isAuthenticated } from './auth';
 import { AppLayout } from '../layouts';
 import { BUSINESSES } from '../mocks/fixtures';
 import { sharingService, type Caller } from '../services';
 import type { Industry, Locale, Role } from '../types';
 import { Home, SignUp, Login, Onboarding } from '../features/marketing/screens';
 import { ChatGuide } from '../features/chat/ChatGuide';
-import { Dashboard, Transactions, Receipts } from '../features/dashboard/screens';
+import { Dashboard, Transactions, Receipts, Connections } from '../features/dashboard/screens';
 import {
   Deductions, Quarterly, Documents, ExportCenter, Sharing,
   RestaurantDashboard, SalonDashboard,
@@ -40,6 +41,11 @@ function Routed({ industry, role, forcedState }: { industry: Industry; role: Rol
     return <Onboarding step={path.split('/')[2] ?? 'language'} onIndustry={() => {}} />;
   }
 
+  // Auth guard — any /app/* route requires a session.
+  if (path.startsWith('/app/') && !isAuthenticated()) {
+    return <Login />;
+  }
+
   const screen = (() => {
     if (path.startsWith('/app/transactions')) return <Transactions business={business} caller={caller} state={forcedState} />;
     if (path.startsWith('/app/receipts')) return <Receipts business={business} caller={caller} />;
@@ -47,6 +53,7 @@ function Routed({ industry, role, forcedState }: { industry: Industry; role: Rol
     if (path.startsWith('/app/quarterly')) return <Quarterly caller={caller} />;
     if (path.startsWith('/app/documents')) return <Documents caller={caller} />;
     if (path.startsWith('/app/exports')) return <ExportCenter caller={caller} />;
+    if (path.startsWith('/app/connections')) return <Connections business={business} caller={caller} />;
     if (path.startsWith('/app/collaboration')) return <Sharing caller={caller} />;
     // Industry routes mount only for the matching industry — a salon build
     // contains no restaurant screens.

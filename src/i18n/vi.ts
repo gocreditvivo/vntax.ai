@@ -81,6 +81,10 @@ export const vi: Dict = {
     reviewRecommended: 'Nên nhờ chuyên viên thuế xem lại',
     dependsOnRecords: 'Kết quả tùy thuộc vào hồ sơ đầy đủ và chính xác',
     notReviewed: 'Chưa được xem lại',
+    stateBoundary:
+      'Phần mềm này chỉ hỗ trợ sắp xếp thuế liên bang. Yêu cầu nộp thuế tiểu bang và địa phương ' +
+      'khác nhau tùy theo khu vực. Vui lòng liên hệ cơ quan thuế tiểu bang hoặc chuyên gia ' +
+      'tư vấn để biết các nghĩa vụ cụ thể cho tiểu bang của anh chị.',
   },
 
   status: {
@@ -108,6 +112,7 @@ export const vi: Dict = {
     restaurant: 'Nhà hàng',
     salon: 'Tiệm nail',
     settings: 'Cài đặt',
+    connections: 'Tài khoản đã nối',
   },
 
   marketing: {

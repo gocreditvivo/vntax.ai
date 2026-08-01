@@ -161,6 +161,7 @@ export function DisclosureNote({ kind }: { kind: 'planning' | 'deduction' | 'gen
     <div className="rounded-xl border border-line bg-cream px-4 py-3 text-sm text-ink-600">
       {label && <span className="mr-1.5 font-semibold text-ink-800">{label}.</span>}
       {body}
+      <p className="mt-2 text-xs text-ink-500">{t.legal.stateBoundary}</p>
     </div>
   );
 }

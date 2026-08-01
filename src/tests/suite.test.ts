@@ -351,7 +351,7 @@ describe('tax engine boundary', () => {
   });
 
   it('income tax is reported as unsupported rather than guessed', () => {
-    expect(est.unsupported).toContain('income_tax_brackets_unverified');
+    expect(est.unsupported).toContain('income_tax_brackets');
   });
 
   it('the self-employment figure matches verified 2026 logic', () => {
