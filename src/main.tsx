@@ -2,7 +2,11 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { HashRouter, useLocation, useNavigate } from 'react-router-dom';
 import App from './app/App';
+import { restoreSession } from './app/auth';
 import './index.css';
+import './posthog';
+
+restoreSession();
 
 /**
  * Bridges react-router-dom to the app's router abstraction, so screens stay

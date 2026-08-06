@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useI18n } from '../../i18n';
+import posthog from '../../posthog';
 import { Link } from '../../app/router';
 import {
   Button, Card, ConfidenceBar, DisclosureNote, EmptyState, ErrorState,
@@ -208,7 +209,13 @@ export function Transactions({
   };
 
   const confirmSelected = async () => {
-    await confirmMany.run(caller, [...selected]);
+    const transactionIds = [...selected];
+    const result = await confirmMany.run(caller, transactionIds);
+    if (result?.ok && result.data.confirmed.length > 0) {
+      posthog.capture('transactions_bulk_confirmed', {
+        confirmed_count: result.data.confirmed.length,
+      });
+    }
     setSelected(new Set());
     list.reload();
   };
@@ -319,7 +326,11 @@ export function Transactions({
                           <Button
                             size="sm"
                             disabled={!mayConfirm}
-                            onClick={async () => { await confirmOne.run(caller, x.id); list.reload(); }}
+                            onClick={async () => {
+                              const result = await confirmOne.run(caller, x.id);
+                              if (result?.ok) posthog.capture('transaction_confirmed');
+                              list.reload();
+                            }}
                           >
                             {t.common.confirm}
                           </Button>
@@ -369,10 +380,18 @@ export function Receipts({
         <h2 className="font-display text-lg font-semibold">{t.receipts.uploadTitle}</h2>
         <p className="mx-auto mt-1.5 max-w-sm text-sm text-ink-500">{t.receipts.uploadBody}</p>
         <div className="mt-5 flex flex-wrap justify-center gap-2">
-          <Button onClick={async () => { await upload.run(caller, { name: 'photo.jpg' }); all.reload(); }}>
+          <Button onClick={async () => {
+            const result = await upload.run(caller, { name: 'photo.jpg' });
+            if (result?.ok) posthog.capture('receipt_uploaded', { source: 'camera' });
+            all.reload();
+          }}>
             {t.receipts.takePhoto}
           </Button>
-          <Button variant="secondary" onClick={async () => { await upload.run(caller, { name: 'receipt.pdf' }); all.reload(); }}>
+          <Button variant="secondary" onClick={async () => {
+            const result = await upload.run(caller, { name: 'receipt.pdf' });
+            if (result?.ok) posthog.capture('receipt_uploaded', { source: 'file' });
+            all.reload();
+          }}>
             {t.receipts.chooseFile}
           </Button>
         </div>
