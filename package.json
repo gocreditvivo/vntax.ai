@@ -17,6 +17,7 @@
     "finalize": "bash tools/finalize-package.sh"
   },
   "dependencies": {
+    "posthog-js": "^1.413.2",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-router-dom": "^7.9.1"

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { ChangeEvent } from 'react';
 import { useI18n, FormName } from '../../i18n';
+import posthog from '../../posthog';
 import {
   Button, Card, DisclosureNote, PageHeader, Stat, StatusChip,
 } from '../../components/ui';
@@ -89,7 +90,10 @@ export function Deductions({
                         className="h-4 w-4 accent-jade-700"
                         onChange={async () => {
                           const r = await confirmGroup.run(caller, g.id);
-                          if (r.ok) setDone({ ...done, [g.id]: true });
+                          if (r.ok) {
+                            setDone({ ...done, [g.id]: true });
+                            posthog.capture('deduction_group_confirmed');
+                          }
                         }}
                       />
                       <span>{t.deductions.confirmGroup}</span>
@@ -239,7 +243,11 @@ export function Documents({
                   <StatusChip status={statusMap[d.status]} />
                   {(d.status === 'missing' || d.status === 'requested') && (
                     <Button size="sm" variant="secondary"
-                      onClick={async () => { await upload.run(caller, d.id); docs.reload(); }}>
+                      onClick={async () => {
+                        const result = await upload.run(caller, d.id);
+                        if (result?.ok) posthog.capture('document_uploaded', { document_kind: d.kind });
+                        docs.reload();
+                      }}>
                       {t.common.upload}
                     </Button>
                   )}
@@ -319,7 +327,12 @@ export function ExportCenter({
               <Button
                 onClick={async () => {
                   const r = await build.run(caller, 2026, ['pdf', 'csv']);
-                  if (r.ok) setBuilt({ id: r.data.id, included: r.data.includedTransactionIds.length });
+                  if (r.ok) {
+                    setBuilt({ id: r.data.id, included: r.data.includedTransactionIds.length });
+                    posthog.capture('tax_export_built', {
+                      included_transaction_count: r.data.includedTransactionIds.length,
+                    });
+                  }
                 }}
               >
                 {t.exports.build}
@@ -391,7 +404,11 @@ export function Sharing({
                     <StatusChip status={active ? 'completed' : 'archived'} />
                     {active && mayGrant && (
                       <Button size="sm" variant="danger"
-                        onClick={async () => { await revoke.run(caller, g.id); grants.reload(); }}>
+                        onClick={async () => {
+                          const result = await revoke.run(caller, g.id);
+                          if (result?.ok) posthog.capture('professional_access_revoked');
+                          grants.reload();
+                        }}>
                         {t.sharing.revoke}
                       </Button>
                     )}
@@ -416,7 +433,11 @@ export function Sharing({
             <Button
               onClick={async () => {
                 const r = await invite.run(caller, { email, taxYears: [2026], folders: ['tax_2026'] });
-                if (r.ok) { setEmail(''); grants.reload(); }
+                if (r.ok) {
+                  setEmail('');
+                  grants.reload();
+                  posthog.capture('professional_access_invited');
+                }
               }}
             >
               {t.sharing.invite}

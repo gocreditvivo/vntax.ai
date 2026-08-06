@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useI18n, FormName } from '../../i18n';
 import { Link, useNav } from '../../app/router';
 import { setSession } from '../../app/auth';
+import posthog from '../../posthog';
 import { MarketingLayout, AuthLayout, OnboardingLayout } from '../../layouts';
 import { Button, Card, Field, Input, DisclosureNote } from '../../components/ui';
 import type { EntityType, Industry } from '../../types';
@@ -122,7 +123,11 @@ export function SignUp() {
           <Input id="phone" type="tel" />
         </Field>
         <Field id="pw" label={t.auth.password}><Input id="pw" type="password" /></Field>
-        <Button className="w-full" onClick={() => { setSession(); navigate('/onboarding/language'); }}>
+        <Button className="w-full" onClick={() => {
+          setSession();
+          posthog.capture('account_signed_up');
+          navigate('/onboarding/language');
+        }}>
           {t.common.continue}
         </Button>
         <p className="mt-5 text-center text-sm text-ink-500">
@@ -143,7 +148,11 @@ export function Login() {
         <h1 className="mb-6 font-display text-2xl font-semibold">{t.auth.loginTitle}</h1>
         <Field id="lemail" label={t.auth.email}><Input id="lemail" type="email" /></Field>
         <Field id="lpw" label={t.auth.password}><Input id="lpw" type="password" /></Field>
-        <Button className="w-full" onClick={() => { setSession(); navigate('/app/dashboard'); }}>{t.common.signIn}</Button>
+        <Button className="w-full" onClick={() => {
+          setSession();
+          posthog.capture('account_logged_in');
+          navigate('/app/dashboard');
+        }}>{t.common.signIn}</Button>
         <p className="mt-5 text-center text-sm text-ink-500">
           {t.auth.noAccount}{' '}
           <Link to="/auth/sign-up" className="font-medium text-jade-700 underline">{t.common.signUp}</Link>
@@ -224,7 +233,11 @@ export function Onboarding({
           ] as const).map(([key, title, body]) => (
             <button
               key={key}
-              onClick={() => { onIndustry(key); next('entity'); }}
+              onClick={() => {
+                onIndustry(key);
+                posthog.capture('onboarding_industry_selected', { industry: key });
+                next('entity');
+              }}
               className="rounded-2xl border border-line bg-white p-6 text-left transition hover:border-jade-600"
             >
               <h3 className="font-display text-xl font-semibold">{title}</h3>
@@ -278,7 +291,11 @@ export function Onboarding({
         <Card className="p-8 text-center">
           <div className="mb-3 text-4xl" aria-hidden="true">✓</div>
           <p className="mb-6 text-ink-500">{t.onboarding.completeBody}</p>
-          <Button onClick={() => { setSession(); navigate('/app/dashboard'); }}>{t.nav.dashboard}</Button>
+          <Button onClick={() => {
+            setSession();
+            posthog.capture('onboarding_completed');
+            navigate('/app/dashboard');
+          }}>{t.nav.dashboard}</Button>
         </Card>
       )}
     </OnboardingLayout>
