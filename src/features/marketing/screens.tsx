@@ -18,20 +18,20 @@ export function Home() {
           <p className="mb-5 inline-flex rounded-full border border-white/25 bg-white/10 px-3 py-1.5 text-sm text-white/85">
             {t.marketing.trustBadge}
           </p>
-          <h1 className="max-w-3xl font-display text-4xl font-semibold leading-tight sm:text-5xl">
+          <h1 className="display-hero max-w-3xl text-4xl sm:text-5xl lg:text-6xl">
             {t.marketing.heroTitle}
           </h1>
           <p className="mt-5 max-w-xl text-lg text-white/80">{t.marketing.heroBody}</p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
               to="/auth/sign-up"
-              className="rounded-xl bg-white px-6 py-3.5 font-semibold text-jade-800 hover:bg-cream"
+              className="rounded-full bg-white px-6 py-3.5 font-semibold text-jade-800 hover:bg-cream"
             >
               {t.marketing.ctaPrimary}
             </Link>
             <Link
               to="/#how"
-              className="rounded-xl border border-white/40 px-6 py-3.5 font-semibold text-white hover:bg-white/10"
+              className="rounded-full border border-white/40 px-6 py-3.5 font-semibold text-white hover:bg-white/10"
             >
               {t.marketing.ctaSecondary}
             </Link>
@@ -45,16 +45,16 @@ export function Home() {
 
       {/* industry selection */}
       <section className="mx-auto max-w-6xl px-5 py-16">
-        <h2 className="mb-6 font-display text-2xl font-semibold">{t.marketing.pickIndustry}</h2>
+        <h2 className="display-section mb-6 text-3xl">{t.marketing.pickIndustry}</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           {([
             ['restaurant', t.marketing.restaurantCard, t.marketing.restaurantCardBody],
             ['nail_salon', t.marketing.salonCard, t.marketing.salonCardBody],
           ] as const).map(([key, title, body]) => (
             <Link key={key} to="/auth/sign-up">
-              <Card className="h-full p-6 transition hover:border-jade-600 hover:shadow-sm">
-                <h3 className="font-display text-xl font-semibold text-ink-900">{title}</h3>
-                <p className="mt-2 text-ink-500">{body}</p>
+              <Card className="h-full rounded-2xl p-6 transition hover:border-jade-600 hover:shadow-sm">
+                <h3 className="display-section text-xl text-content-primary">{title}</h3>
+                <p className="mt-2 text-content-muted">{body}</p>
               </Card>
             </Link>
           ))}
@@ -64,7 +64,7 @@ export function Home() {
       {/* how it works */}
       <section id="how" className="bg-cream px-5 py-16">
         <div className="mx-auto max-w-6xl">
-          <h2 className="mb-8 font-display text-2xl font-semibold">{t.marketing.howTitle}</h2>
+          <h2 className="display-section mb-8 text-3xl">{t.marketing.howTitle}</h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {([
               [t.marketing.how1, t.marketing.how1Body],
@@ -77,8 +77,8 @@ export function Home() {
                 <div className="mb-3 flex h-8 w-8 items-center justify-center rounded-full bg-jade-700 text-sm font-semibold text-white">
                   {i + 1}
                 </div>
-                <h3 className="font-semibold text-ink-900">{title}</h3>
-                <p className="mt-1.5 text-sm text-ink-500">{body}</p>
+                <h3 className="font-semibold text-content-primary">{title}</h3>
+                <p className="mt-1.5 text-sm text-content-muted">{body}</p>
               </Card>
             ))}
           </div>
@@ -88,15 +88,15 @@ export function Home() {
       {/* bilingual + security */}
       <section className="mx-auto grid max-w-6xl gap-4 px-5 py-16 sm:grid-cols-2">
         <Card className="p-6">
-          <h3 className="font-display text-xl font-semibold">{t.marketing.bilingualTitle}</h3>
-          <p className="mt-2 text-ink-500">{t.marketing.bilingualBody}</p>
+          <h3 className="display-section text-xl">{t.marketing.bilingualTitle}</h3>
+          <p className="mt-2 text-content-muted">{t.marketing.bilingualBody}</p>
           <p className="mt-4 text-sm text-ink-600">
             <FormName id="schedule_c" />
           </p>
         </Card>
         <Card className="p-6">
-          <h3 className="font-display text-xl font-semibold">{t.marketing.securityTitle}</h3>
-          <p className="mt-2 text-ink-500">{t.marketing.securityBody}</p>
+          <h3 className="display-section text-xl">{t.marketing.securityTitle}</h3>
+          <p className="mt-2 text-content-muted">{t.marketing.securityBody}</p>
         </Card>
       </section>
 

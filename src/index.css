@@ -2,9 +2,76 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Design tokens ─────────────────────────────────────────────────────────
+   Wise-derived token architecture, VNTax jade identity. These CSS variables
+   mirror the Tailwind theme so non-Tailwind surfaces (emails, embeds, future
+   Next.js migration) can consume the same values. See docs/DESIGN_TOKENS.md. */
+:root {
+  /* Color — semantic */
+  --vn-content-primary: #1A1815;
+  --vn-content-secondary: #54514A;
+  --vn-content-muted: #6E6B63;
+  --vn-content-inverse: #FFFFFF;
+
+  --vn-interactive-primary: #155E4C;
+  --vn-interactive-hover: #10493B;
+  --vn-interactive-active: #0C3830;
+  --vn-interactive-contrast: #FFFFFF;
+
+  --vn-sentiment-positive: #1B7A5F;
+  --vn-sentiment-warning: #C79A42;
+  --vn-sentiment-negative: #93463E;
+  --vn-sentiment-info: #33507F;
+
+  --vn-surface-base: #FFFFFF;
+  --vn-surface-sunken: #FBF8F3;
+  --vn-surface-inverse: #152444;
+  --vn-border: #E5E0D6;
+
+  /* Typography */
+  --vn-font-regular: "Be Vietnam Pro", ui-sans-serif, system-ui, sans-serif;
+  --vn-font-display: "Lora", Georgia, serif;
+  --vn-line-height-title: 1.2;
+  --vn-line-height-body: 1.5;
+  --vn-tracking-display: -0.02em;
+  --vn-tracking-display-tight: -0.03em;
+
+  /* Spacing */
+  --vn-space-xs: 8px;
+  --vn-space-sm: 16px;
+  --vn-space-md: 24px;
+  --vn-space-lg: 32px;
+  --vn-space-xl: 40px;
+  --vn-space-2xl: 56px;
+
+  /* Radius */
+  --vn-radius-sm: 10px;
+  --vn-radius-md: 16px;
+  --vn-radius-lg: 24px;
+  --vn-radius-xl: 32px;
+  --vn-radius-full: 9999px;
+}
+
 /* Vietnamese runs longer than English; layouts must tolerate wrapping. */
 @layer base {
   html { -webkit-text-size-adjust: 100%; }
-  body { @apply bg-white text-ink-900 antialiased; }
+  body { @apply bg-white text-content-primary antialiased; }
   :focus-visible { @apply outline-none ring-2 ring-jade-600 ring-offset-2; }
+
+  /* Vietnamese tone marks stack above the cap height. Serif display faces
+     clip them when line-height is set below ~1.15, so display headings get
+     explicit breathing room rather than inheriting a tight leading. */
+  h1, h2, h3 { line-height: 1.22; }
+}
+
+@layer components {
+  /* Display type: tightens as it grows, never so tight that diacritics collide. */
+  .display-hero {
+    @apply font-display font-semibold tracking-display-tight;
+    line-height: 1.16;
+  }
+  .display-section {
+    @apply font-display font-semibold tracking-display;
+    line-height: 1.22;
+  }
 }
