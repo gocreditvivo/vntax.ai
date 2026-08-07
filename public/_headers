@@ -1,0 +1,21 @@
+# Cloudflare Pages headers. Vite copies everything in public/ into dist/,
+# so this ships with the build output.
+#
+# This app handles tax documents and financial data. Even in the current
+# mock-data phase, shipping these headers now means the posture is already
+# correct when real Supabase data lands.
+
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(self), microphone=(), geolocation=()
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+
+# Vite emits content-hashed filenames, so bundles are safe to cache forever.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# The shell must never be cached, or users get stale bundle references.
+/index.html
+  Cache-Control: no-cache

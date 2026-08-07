@@ -1,0 +1,73 @@
+name: Deploy to Cloudflare Pages
+
+# Builds the app in CI and direct-uploads dist/ to Cloudflare Pages.
+#
+# Why direct upload instead of Cloudflare's Git integration:
+#   1. Cloudflare's build command can only be set in the dashboard or via API,
+#      so it is not reviewable in the repo and silently drifts. That drift is
+#      exactly what broke the site — the dashboard had no build command, so
+#      Pages published the raw source tree and every visitor got a blank page.
+#   2. Pushes were not reliably triggering rebuilds, forcing manual redeploys.
+#      This workflow makes deployment follow the branch automatically.
+#
+# Required repository secrets (Settings > Secrets and variables > Actions):
+#   CLOUDFLARE_API_TOKEN  — token with the "Cloudflare Pages: Edit" permission
+#   CLOUDFLARE_ACCOUNT_ID — from the Cloudflare dashboard URL or Workers page
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  deployments: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+
+      # npm ci installs strictly from the lockfile, matching the .npmrc policy.
+      - run: npm ci
+
+      # Gate the deploy on the existing suite. A blank page is not the only way
+      # to ship something broken.
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run test
+      - run: npm run build
+
+      # Fail loudly if the build did not produce a real bundle, rather than
+      # publishing an empty or source-only directory the way the dashboard did.
+      - name: Verify build output
+        run: |
+          test -f dist/index.html || { echo "::error::dist/index.html missing"; exit 1; }
+          if grep -q 'src="/src/main.tsx"' dist/index.html; then
+            echo "::error::dist/index.html still references TypeScript source — build did not run"
+            exit 1
+          fi
+          ls dist/assets/*.js >/dev/null 2>&1 || { echo "::error::no JS bundle in dist/assets"; exit 1; }
+          echo "Build output verified:"
+          ls -la dist dist/assets
+
+      - name: Publish to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: >-
+            pages deploy dist
+            --project-name=vntax-ai
+            --branch=${{ github.head_ref || github.ref_name }}

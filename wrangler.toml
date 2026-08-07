@@ -1,0 +1,15 @@
+# Cloudflare Pages configuration.
+#
+# Without this file, Pages was serving the repository root as static assets,
+# which meant the raw source `index.html` went live — its only script tag is
+# `<script type="module" src="/src/main.tsx">`. Browsers cannot execute
+# TypeScript, so every visitor got a blank page.
+#
+# `pages_build_output_dir` makes this file the source of truth for the output
+# directory; the matching dashboard field becomes read-only once this is
+# deployed. The build COMMAND cannot be set here — Cloudflare only reads it
+# from the dashboard or the API. See docs/DEPLOYMENT.md.
+
+name = "vntax-ai"
+pages_build_output_dir = "./dist"
+compatibility_date = "2026-08-06"
