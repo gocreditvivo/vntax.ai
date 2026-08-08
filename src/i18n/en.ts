@@ -149,6 +149,32 @@ export const en = {
     haveAccount: 'Already have an account?',
     noAccount: 'New here?',
     mfaNote: 'We will text you a code to keep your account safe.',
+    phoneOptional: 'Optional',
+    passwordHint: 'At least 8 characters.',
+    signingIn: 'Signing in…',
+    creatingAccount: 'Creating your account…',
+    forgotPassword: 'Forgot your password?',
+    resetSent: 'If that email has an account, we have sent a reset link. Check your inbox.',
+    confirmEmailTitle: 'Confirm your email',
+    confirmEmailBody:
+      'We sent a confirmation link to your email. Open it to finish setting up your account.',
+    identityUnavailable:
+      'We could not load your account just now. Your data is safe. Please try again.',
+    // Server messages arrive in English. They are mapped to codes and
+    // translated here so a Vietnamese-speaking owner never sees English text
+    // at the moment something goes wrong.
+    errors: {
+      invalid_credentials: 'That email and password do not match. Please try again.',
+      email_not_confirmed: 'Please confirm your email first. Check your inbox for the link.',
+      email_taken: 'That email is already registered. Try signing in instead.',
+      weak_password: 'Please use a password of at least 8 characters.',
+      invalid_email: 'Please enter a valid email address.',
+      rate_limited: 'Too many attempts. Please wait a minute and try again.',
+      required_fields: 'Please fill in every required field.',
+      network: 'We could not reach our servers. Check your connection and try again.',
+      not_configured: 'Sign-in is not available in this environment.',
+      unknown: 'Something went wrong. Please try again.',
+    },
   },
 
   onboarding: {
@@ -174,6 +200,11 @@ export const en = {
       'We only read your transactions. We never see your login and we never move money.',
     completeTitle: 'You are set up',
     completeBody: 'We are sorting your transactions now. This takes a few minutes.',
+    saving: 'Saving…',
+    createBusiness: 'Create my business',
+    businessNameRequired: 'Please enter your business name.',
+    createFailed: 'We could not save your business. Please try again.',
+    signedInAs: 'Signed in as',
   },
 
   entity: {
