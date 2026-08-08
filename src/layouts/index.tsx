@@ -10,7 +10,7 @@ export function LocaleSwitch({ compact = false }: { compact?: boolean }) {
     <button
       onClick={() => setLocale(next)}
       aria-label={t.common.language}
-      className="rounded-full border border-line bg-white px-3 py-1.5 text-sm text-ink-600 hover:bg-cream"
+      className="rounded-full border border-line bg-white px-3 py-1.5 text-sm text-content-secondary hover:bg-cream"
     >
       {compact ? (next === 'en' ? 'EN' : 'VI') : next === 'en' ? t.common.english : t.common.vietnamese}
     </button>
@@ -23,7 +23,7 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
     <div className="min-h-screen bg-white">
       <header className="sticky top-0 z-40 border-b border-line bg-white/95 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5">
-          <Link to="/" className="font-display text-xl font-semibold text-jade-800">
+          <Link to="/" className="display-section text-xl text-jade-800">
             {t.common.appName}
           </Link>
           <nav className="flex items-center gap-3">
@@ -33,7 +33,7 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
             </Link>
             <Link
               to="/auth/sign-up"
-              className="rounded-xl bg-jade-700 px-4 py-2 text-sm font-semibold text-white hover:bg-jade-800"
+              className="rounded-full bg-interactive-primary px-4 py-2 text-sm font-semibold text-interactive-contrast hover:bg-interactive-hover"
             >
               {t.common.signUp}
             </Link>
@@ -41,9 +41,9 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
         </div>
       </header>
       <main>{children}</main>
-      <footer className="border-t border-line bg-navy-900 px-5 py-10 text-sm text-white/70">
+      <footer className="border-t border-line bg-surface-inverse px-5 py-10 text-sm text-white/70">
         <div className="mx-auto max-w-6xl">
-          <div className="font-display text-lg text-white">{t.common.appName}</div>
+          <div className="display-section text-lg text-white">{t.common.appName}</div>
           <p className="mt-3 max-w-2xl">{t.legal.disclosure}</p>
           <p className="mt-4 text-white/50">© 2026 {t.common.appName}</p>
         </div>
@@ -57,7 +57,7 @@ export function AuthLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-cream px-5 py-12">
       <div className="w-full max-w-md">
-        <Link to="/" className="mb-6 block text-center font-display text-2xl font-semibold text-jade-800">
+        <Link to="/" className="display-section mb-6 block text-center text-2xl text-jade-800">
           {t.common.appName}
         </Link>
         {children}
@@ -74,7 +74,7 @@ export function OnboardingLayout({
     <div className="min-h-screen bg-cream">
       <header className="border-b border-line bg-white">
         <div className="mx-auto flex h-16 max-w-2xl items-center justify-between px-5">
-          <span className="font-display text-lg font-semibold text-jade-800">{t.common.appName}</span>
+          <span className="display-section text-lg text-jade-800">{t.common.appName}</span>
           <LocaleSwitch compact />
         </div>
       </header>
@@ -92,7 +92,7 @@ export function OnboardingLayout({
             aria-valuemax={total}
           />
         </div>
-        <h1 className="mb-6 font-display text-3xl font-semibold text-ink-900">{title}</h1>
+        <h1 className="display-section mb-6 text-3xl text-content-primary">{title}</h1>
         {children}
       </div>
     </div>
@@ -126,7 +126,7 @@ export function AppLayout({
       <header className="sticky top-0 z-40 border-b border-line bg-white">
         <div className="flex h-16 items-center justify-between gap-4 px-5">
           <div className="flex items-center gap-3">
-            <Link to="/app/dashboard" className="font-display text-lg font-semibold text-jade-800">
+            <Link to="/app/dashboard" className="display-section text-lg text-jade-800">
               {t.common.appName}
             </Link>
             <span className="hidden text-sm text-ink-500 sm:inline">· {businessName}</span>
@@ -146,9 +146,9 @@ export function AppLayout({
                   key={it.to}
                   to={it.to}
                   className={
-                    'block rounded-xl px-3 py-2.5 text-sm transition ' +
+                    'block rounded-sm px-3 py-2.5 text-sm transition ' +
                     (active
-                      ? 'bg-jade-700 font-semibold text-white'
+                      ? 'bg-interactive-primary font-semibold text-interactive-contrast'
                       : 'text-ink-600 hover:bg-white')
                   }
                 >
