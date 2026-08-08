@@ -14,34 +14,38 @@ export function Home() {
   const { t } = useI18n();
   return (
     <MarketingLayout>
-      {/* hero */}
-      <section className="bg-gradient-to-b from-jade-800 to-jade-900 px-5 py-20 text-white">
-        <div className="mx-auto max-w-6xl">
-          <p className="mb-5 inline-flex rounded-full border border-white/25 bg-white/10 px-3 py-1.5 text-sm text-white/85">
-            {t.marketing.trustBadge}
-          </p>
-          <h1 className="display-hero max-w-3xl text-4xl sm:text-5xl lg:text-6xl">
-            {t.marketing.heroTitle}
-          </h1>
-          <p className="mt-5 max-w-xl text-lg text-white/80">{t.marketing.heroBody}</p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link
-              to="/auth/sign-up"
-              className="rounded-full bg-white px-6 py-3.5 font-semibold text-jade-800 hover:bg-cream"
-            >
-              {t.marketing.ctaPrimary}
-            </Link>
-            <Link
-              to="/#how"
-              className="rounded-full border border-white/40 px-6 py-3.5 font-semibold text-white hover:bg-white/10"
-            >
-              {t.marketing.ctaSecondary}
-            </Link>
+      {/* hero — april-inspired: single illustrated object, monospace tag
+          chips, clay/gold accent against the jade field. */}
+      <section className="relative overflow-hidden bg-gradient-to-b from-jade-800 to-jade-900 px-5 py-20 text-white">
+        <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+          <div>
+            <p className="mb-5 inline-flex rounded-full border border-white/25 bg-white/10 px-3 py-1.5 font-mono text-xs uppercase tracking-wide text-white/85">
+              {t.marketing.trustBadge}
+            </p>
+            <h1 className="display-hero max-w-xl text-4xl sm:text-5xl lg:text-6xl">
+              {t.marketing.heroTitle}
+            </h1>
+            <p className="mt-5 max-w-xl text-lg text-white/80">{t.marketing.heroBody}</p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link
+                to="/auth/sign-up"
+                className="rounded-full bg-gold-500 px-6 py-3.5 font-semibold text-jade-900 hover:bg-gold-600"
+              >
+                {t.marketing.ctaPrimary}
+              </Link>
+              <Link
+                to="/#how"
+                className="rounded-full border border-white/40 px-6 py-3.5 font-semibold text-white hover:bg-white/10"
+              >
+                {t.marketing.ctaSecondary}
+              </Link>
+            </div>
+            <p className="mt-5 max-w-2xl text-sm text-white/60">
+              {t.marketing.productBoundary}
+            </p>
+            <p className="mt-5 text-sm text-white/60">{t.legal.promise}</p>
           </div>
-          <p className="mt-5 max-w-2xl text-sm text-white/60">
-            {t.marketing.productBoundary}
-          </p>
-          <p className="mt-5 text-sm text-white/60">{t.legal.promise}</p>
+          <HeroLedgerCard />
         </div>
       </section>
 
@@ -403,6 +407,45 @@ export function Onboarding({
         </Card>
       )}
     </OnboardingLayout>
+  );
+}
+
+/**
+ * april-inspired hero illustration: a floating "ledger card" built from SVG
+ * shapes (no external asset dependency), tilted like a 3D object, with a
+ * small monospace-labeled callout — riffing on the IRS-form visual language
+ * without borrowing any actual form content.
+ */
+function HeroLedgerCard() {
+  return (
+    <div className="relative mx-auto hidden aspect-square w-full max-w-sm sm:block" aria-hidden="true">
+      <div className="absolute inset-0 rounded-3xl bg-gold-500/10 blur-2xl" />
+      <svg
+        viewBox="0 0 320 320"
+        className="absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 -rotate-6 drop-shadow-2xl transition-transform duration-700 hover:rotate-0"
+      >
+        <rect x="48" y="24" width="200" height="260" rx="18" fill="#FBF8F3" stroke="#0C3830" strokeWidth="2" />
+        <rect x="68" y="56" width="120" height="12" rx="6" fill="#155E4C" />
+        <rect x="68" y="84" width="160" height="6" rx="3" fill="#C4C2BB" />
+        <rect x="68" y="100" width="160" height="6" rx="3" fill="#C4C2BB" />
+        <rect x="68" y="116" width="110" height="6" rx="3" fill="#C4C2BB" />
+        <line x1="68" y1="142" x2="228" y2="142" stroke="#E5E0D6" strokeWidth="2" />
+        <rect x="68" y="158" width="90" height="8" rx="4" fill="#3D3B35" />
+        <rect x="188" y="158" width="40" height="8" rx="4" fill="#B8894A" />
+        <rect x="68" y="178" width="90" height="8" rx="4" fill="#3D3B35" />
+        <rect x="188" y="178" width="40" height="8" rx="4" fill="#B8894A" />
+        <rect x="68" y="198" width="90" height="8" rx="4" fill="#3D3B35" />
+        <rect x="188" y="198" width="40" height="8" rx="4" fill="#B8894A" />
+        <rect x="68" y="236" width="160" height="2" fill="#E5E0D6" />
+        <rect x="68" y="250" width="70" height="10" rx="5" fill="#0C3830" />
+        <rect x="188" y="250" width="40" height="10" rx="5" fill="#0C3830" />
+        <circle cx="232" cy="40" r="22" fill="#C79A42" />
+        <path d="M224 40l6 6 10-12" stroke="#0C3830" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+      <div className="absolute -bottom-2 left-1/2 w-max -translate-x-1/2 rounded-xl border border-white/20 bg-jade-900/80 px-4 py-2 font-mono text-xs text-white/90 shadow-lg backdrop-blur">
+        $3,184 <span className="text-white/50">est. refund</span>
+      </div>
+    </div>
   );
 }
 
