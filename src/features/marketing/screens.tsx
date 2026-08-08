@@ -14,36 +14,37 @@ export function Home() {
   const { t } = useI18n();
   return (
     <MarketingLayout>
-      {/* hero — april-inspired: single illustrated object, monospace tag
-          chips, clay/gold accent against the jade field. */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-jade-800 to-jade-900 px-5 py-20 text-white">
+      {/* hero — april-inspired, light variant: pale neutral field (like
+          getapril.com's off-white background) instead of the jade block,
+          with jade/gold reserved for the illustration and primary CTA. */}
+      <section className="relative overflow-hidden bg-ink-50 px-5 py-20 text-content-primary">
         <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
           <div>
-            <p className="mb-5 inline-flex rounded-full border border-white/25 bg-white/10 px-3 py-1.5 font-mono text-xs uppercase tracking-wide text-white/85">
+            <p className="mb-5 inline-flex rounded-full border border-line bg-white px-3 py-1.5 font-mono text-xs uppercase tracking-wide text-content-secondary">
               {t.marketing.trustBadge}
             </p>
-            <h1 className="display-hero max-w-xl text-4xl sm:text-5xl lg:text-6xl">
+            <h1 className="display-hero max-w-xl text-4xl text-content-primary sm:text-5xl lg:text-6xl">
               {t.marketing.heroTitle}
             </h1>
-            <p className="mt-5 max-w-xl text-lg text-white/80">{t.marketing.heroBody}</p>
+            <p className="mt-5 max-w-xl text-lg text-content-secondary">{t.marketing.heroBody}</p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
                 to="/auth/sign-up"
-                className="rounded-full bg-gold-500 px-6 py-3.5 font-semibold text-jade-900 hover:bg-gold-600"
+                className="rounded-full bg-jade-700 px-6 py-3.5 font-semibold text-white hover:bg-jade-800"
               >
                 {t.marketing.ctaPrimary}
               </Link>
               <Link
                 to="/#how"
-                className="rounded-full border border-white/40 px-6 py-3.5 font-semibold text-white hover:bg-white/10"
+                className="rounded-full border border-line px-6 py-3.5 font-semibold text-content-primary hover:bg-white"
               >
                 {t.marketing.ctaSecondary}
               </Link>
             </div>
-            <p className="mt-5 max-w-2xl text-sm text-white/60">
+            <p className="mt-5 max-w-2xl text-sm text-content-muted">
               {t.marketing.productBoundary}
             </p>
-            <p className="mt-5 text-sm text-white/60">{t.legal.promise}</p>
+            <p className="mt-5 text-sm text-content-muted">{t.legal.promise}</p>
           </div>
           <HeroLedgerCard />
         </div>
@@ -419,12 +420,12 @@ export function Onboarding({
 function HeroLedgerCard() {
   return (
     <div className="relative mx-auto hidden aspect-square w-full max-w-sm sm:block" aria-hidden="true">
-      <div className="absolute inset-0 rounded-3xl bg-gold-500/10 blur-2xl" />
+      <div className="absolute inset-0 rounded-3xl bg-jade-600/10 blur-3xl" />
       <svg
         viewBox="0 0 320 320"
         className="absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 -rotate-6 drop-shadow-2xl transition-transform duration-700 hover:rotate-0"
       >
-        <rect x="48" y="24" width="200" height="260" rx="18" fill="#FBF8F3" stroke="#0C3830" strokeWidth="2" />
+        <rect x="48" y="24" width="200" height="260" rx="18" fill="#FFFFFF" stroke="#155E4C" strokeWidth="2" />
         <rect x="68" y="56" width="120" height="12" rx="6" fill="#155E4C" />
         <rect x="68" y="84" width="160" height="6" rx="3" fill="#C4C2BB" />
         <rect x="68" y="100" width="160" height="6" rx="3" fill="#C4C2BB" />
@@ -442,8 +443,8 @@ function HeroLedgerCard() {
         <circle cx="232" cy="40" r="22" fill="#C79A42" />
         <path d="M224 40l6 6 10-12" stroke="#0C3830" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
-      <div className="absolute -bottom-2 left-1/2 w-max -translate-x-1/2 rounded-xl border border-white/20 bg-jade-900/80 px-4 py-2 font-mono text-xs text-white/90 shadow-lg backdrop-blur">
-        $3,184 <span className="text-white/50">est. refund</span>
+      <div className="absolute -bottom-2 left-1/2 w-max -translate-x-1/2 rounded-xl border border-line bg-white px-4 py-2 font-mono text-xs text-content-primary shadow-lg">
+        $3,184 <span className="text-content-muted">est. refund</span>
       </div>
     </div>
   );
