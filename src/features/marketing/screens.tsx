@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useI18n, FormName } from '../../i18n';
 import { Link, useNav } from '../../app/router';
-import { setSession } from '../../app/auth';
-import { MarketingLayout, AuthLayout, OnboardingLayout } from '../../layouts';
-import { Button, Card, Field, Input, DisclosureNote } from '../../components/ui';
+import { useAuth } from '../../auth/AuthProvider';
+import { createBusiness } from '../../data/businesses';
+import { MarketingLayout, OnboardingLayout } from '../../layouts';
+import { Button, Card, Field, FormError, Input, DisclosureNote } from '../../components/ui';
+import { clearDraft, readDraft, writeDraft, type OnboardingDraft } from './onboardingDraft';
 import type { EntityType, Industry } from '../../types';
 
 // ═══ 1. Bilingual homepage ═════════════════════════════════════════════════
@@ -109,49 +111,11 @@ export function Home() {
 
 // ═══ 3. Sign-up and login ══════════════════════════════════════════════════
 
-export function SignUp() {
-  const { t } = useI18n();
-  const { navigate } = useNav();
-  return (
-    <AuthLayout>
-      <Card className="p-7">
-        <h1 className="mb-6 font-display text-2xl font-semibold">{t.auth.signUpTitle}</h1>
-        <Field id="name" label={t.auth.ownerName}><Input id="name" /></Field>
-        <Field id="email" label={t.auth.email}><Input id="email" type="email" /></Field>
-        <Field id="phone" label={t.auth.phone} hint={t.auth.mfaNote}>
-          <Input id="phone" type="tel" />
-        </Field>
-        <Field id="pw" label={t.auth.password}><Input id="pw" type="password" /></Field>
-        <Button className="w-full" onClick={() => { setSession(); navigate('/onboarding/language'); }}>
-          {t.common.continue}
-        </Button>
-        <p className="mt-5 text-center text-sm text-ink-500">
-          {t.auth.haveAccount}{' '}
-          <Link to="/auth/login" className="font-medium text-jade-700 underline">{t.common.signIn}</Link>
-        </p>
-      </Card>
-    </AuthLayout>
-  );
-}
-
-export function Login() {
-  const { t } = useI18n();
-  const { navigate } = useNav();
-  return (
-    <AuthLayout>
-      <Card className="p-7">
-        <h1 className="mb-6 font-display text-2xl font-semibold">{t.auth.loginTitle}</h1>
-        <Field id="lemail" label={t.auth.email}><Input id="lemail" type="email" /></Field>
-        <Field id="lpw" label={t.auth.password}><Input id="lpw" type="password" /></Field>
-        <Button className="w-full" onClick={() => { setSession(); navigate('/app/dashboard'); }}>{t.common.signIn}</Button>
-        <p className="mt-5 text-center text-sm text-ink-500">
-          {t.auth.noAccount}{' '}
-          <Link to="/auth/sign-up" className="font-medium text-jade-700 underline">{t.common.signUp}</Link>
-        </p>
-      </Card>
-    </AuthLayout>
-  );
-}
+/**
+ * Sign-up and login live in `authForms.tsx`. They are re-exported here so the
+ * app shell's import surface is unchanged and screen imports stay in one place.
+ */
+export { SignUp, Login } from './authForms';
 
 // ═══ 4 & 5. Onboarding, including industry selection ═══════════════════════
 
@@ -160,15 +124,47 @@ const ENTITY_TYPES: EntityType[] = [
   'partnership', 's_corporation', 'unknown',
 ];
 
+/**
+ * Onboarding wizard.
+ *
+ * The final step now performs a real insert into `businesses`. The database
+ * trigger `on_business_created` creates the owner membership atomically, and
+ * `refreshIdentity()` re-reads memberships so the app shell can resolve a role
+ * for the new business immediately rather than on the next page load.
+ *
+ * The owner name and phone collected here are not written to `profiles`: the
+ * signup metadata already populated that row via `on_auth_user_created`, and
+ * overwriting it from the wizard would silently discard whatever the user
+ * typed at signup. These fields prefill from the signed-in profile instead.
+ */
 export function Onboarding({
-  step, onIndustry,
-}: { step: string; onIndustry: (i: Industry) => void }) {
+  step, fallbackIndustry = 'restaurant',
+}: { step: string; fallbackIndustry?: Industry }) {
   const { t } = useI18n();
   const { navigate } = useNav();
-  const [entity, setEntity] = useState<EntityType>('single_member_llc');
+  const { status, identity, refreshIdentity, setActiveBusinessId } = useAuth();
+
+  // `fallbackIndustry` seeds a fresh draft only. Once the user picks an
+  // industry the stored draft wins, so a demo-mode default never overrides a
+  // real choice made two steps earlier.
+  const [draft, setDraft] = useState<OnboardingDraft>(() => {
+    const stored = readDraft();
+    return stored.legalName || stored.industry !== 'restaurant'
+      ? stored
+      : { ...stored, industry: fallbackIndustry };
+  });
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [nameError, setNameError] = useState<string | null>(null);
+
   const STEPS = ['language', 'owner', 'business', 'industry', 'entity', 'connections', 'complete'];
   const idx = Math.max(1, STEPS.indexOf(step) + 1);
   const next = (to: string) => navigate(`/onboarding/${to}`);
+
+  /** Writes through to sessionStorage on every keystroke so back never loses input. */
+  const set = <K extends keyof OnboardingDraft>(key: K, value: OnboardingDraft[K]) => {
+    setDraft(writeDraft({ [key]: value } as Partial<OnboardingDraft>));
+  };
 
   const titles: Record<string, string> = {
     language: t.onboarding.languageTitle,
@@ -180,8 +176,64 @@ export function Onboarding({
     complete: t.onboarding.completeTitle,
   };
 
+  async function createAndEnter() {
+    if (saving) return;
+
+    if (!draft.legalName.trim()) {
+      setSaveError(t.onboarding.businessNameRequired);
+      navigate('/onboarding/business');
+      return;
+    }
+
+    // Demo mode has no database. The wizard still completes so the preview
+    // build and the unit suite can walk the whole flow.
+    if (status === 'unconfigured') {
+      clearDraft();
+      navigate('/app/dashboard');
+      return;
+    }
+
+    setSaving(true);
+    setSaveError(null);
+
+    const result = await createBusiness({
+      legalName: draft.legalName,
+      dbaName: draft.dbaName,
+      industry: draft.industry,
+      entityType: draft.entityType,
+      phone: draft.ownerPhone,
+      address: {
+        line1: draft.line1,
+        line2: null,
+        city: draft.city,
+        state: draft.state.trim().toUpperCase(),
+        postalCode: draft.postalCode,
+        // Locality is resolved from the full address by a later step. An empty
+        // id marks it unresolved rather than asserting a jurisdiction we have
+        // not actually determined — filing authorities are address-level.
+        localityId: '',
+      },
+    });
+
+    if (!result.ok) {
+      setSaving(false);
+      setSaveError(t.onboarding.createFailed);
+      return;
+    }
+
+    // Select the new business before refreshing, so the shell has a target the
+    // moment the membership appears.
+    setActiveBusinessId(result.data.id);
+    await refreshIdentity();
+    clearDraft();
+    setSaving(false);
+    navigate('/app/dashboard');
+  }
+
   return (
     <OnboardingLayout step={idx} total={STEPS.length} title={titles[step] ?? ''}>
+      {saveError && <FormError message={saveError} />}
+
       {step === 'language' && (
         <>
           <p className="mb-6 text-ink-500">{t.onboarding.languageBody}</p>
@@ -194,25 +246,89 @@ export function Onboarding({
 
       {step === 'owner' && (
         <Card className="p-6">
-          <Field id="oname" label={t.auth.ownerName}><Input id="oname" /></Field>
-          <Field id="ophone" label={t.auth.phone}><Input id="ophone" /></Field>
+          {identity && (
+            <p className="mb-4 text-sm text-content-muted">
+              {t.onboarding.signedInAs} {identity.email}
+            </p>
+          )}
+          <Field id="oname" label={t.auth.ownerName}>
+            <Input
+              id="oname"
+              value={draft.ownerName || identity?.displayName || ''}
+              onChange={(e) => set('ownerName', e.target.value)}
+              autoComplete="name"
+            />
+          </Field>
+          <Field id="ophone" label={t.auth.phone} hint={t.auth.phoneOptional}>
+            <Input
+              id="ophone"
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              value={draft.ownerPhone}
+              onChange={(e) => set('ownerPhone', e.target.value)}
+            />
+          </Field>
           <Button className="w-full" onClick={() => next('business')}>{t.common.continue}</Button>
         </Card>
       )}
 
       {step === 'business' && (
         <Card className="p-6">
-          <Field id="bname" label={t.onboarding.businessName}><Input id="bname" /></Field>
-          <Field id="dba" label={t.onboarding.dbaName}><Input id="dba" /></Field>
+          <Field id="bname" label={t.onboarding.businessName} error={nameError ?? undefined}>
+            <Input
+              id="bname"
+              value={draft.legalName}
+              onChange={(e) => { set('legalName', e.target.value); setNameError(null); }}
+              aria-invalid={!!nameError}
+              autoComplete="organization"
+            />
+          </Field>
+          <Field id="dba" label={t.onboarding.dbaName}>
+            <Input id="dba" value={draft.dbaName} onChange={(e) => set('dbaName', e.target.value)} />
+          </Field>
           <Field id="addr" label={t.onboarding.address} hint={t.onboarding.localityNote}>
-            <Input id="addr" />
+            <Input
+              id="addr"
+              value={draft.line1}
+              onChange={(e) => set('line1', e.target.value)}
+              autoComplete="street-address"
+            />
           </Field>
           <div className="grid gap-3 sm:grid-cols-3">
-            <Field id="city" label={t.onboarding.city}><Input id="city" /></Field>
-            <Field id="state" label={t.onboarding.state}><Input id="state" /></Field>
-            <Field id="zip" label={t.onboarding.postal}><Input id="zip" /></Field>
+            <Field id="city" label={t.onboarding.city}>
+              <Input id="city" value={draft.city} onChange={(e) => set('city', e.target.value)} />
+            </Field>
+            <Field id="state" label={t.onboarding.state}>
+              <Input
+                id="state"
+                value={draft.state}
+                maxLength={2}
+                onChange={(e) => set('state', e.target.value.toUpperCase())}
+              />
+            </Field>
+            <Field id="zip" label={t.onboarding.postal}>
+              <Input
+                id="zip"
+                inputMode="numeric"
+                value={draft.postalCode}
+                onChange={(e) => set('postalCode', e.target.value)}
+                autoComplete="postal-code"
+              />
+            </Field>
           </div>
-          <Button className="w-full" onClick={() => next('industry')}>{t.common.continue}</Button>
+          <Button
+            className="w-full"
+            onClick={() => {
+              if (!draft.legalName.trim()) {
+                setNameError(t.onboarding.businessNameRequired);
+                return;
+              }
+              next('industry');
+            }}
+          >
+            {t.common.continue}
+          </Button>
         </Card>
       )}
 
@@ -224,8 +340,11 @@ export function Onboarding({
           ] as const).map(([key, title, body]) => (
             <button
               key={key}
-              onClick={() => { onIndustry(key); next('entity'); }}
-              className="rounded-2xl border border-line bg-white p-6 text-left transition hover:border-jade-600"
+              onClick={() => { set('industry', key); next('entity'); }}
+              className={
+                'rounded-2xl border bg-white p-6 text-left transition hover:border-jade-600 ' +
+                (draft.industry === key ? 'border-jade-600' : 'border-line')
+              }
             >
               <h3 className="font-display text-xl font-semibold">{title}</h3>
               <p className="mt-2 text-sm text-ink-500">{body}</p>
@@ -243,12 +362,12 @@ export function Onboarding({
                 key={e}
                 className={
                   'flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 ' +
-                  (entity === e ? 'border-jade-600 bg-jade-50' : 'border-line')
+                  (draft.entityType === e ? 'border-jade-600 bg-jade-50' : 'border-line')
                 }
               >
                 <input
-                  type="radio" name="entity" value={e} checked={entity === e}
-                  onChange={() => setEntity(e)} className="accent-jade-700"
+                  type="radio" name="entity" value={e} checked={draft.entityType === e}
+                  onChange={() => set('entityType', e)} className="accent-jade-700"
                 />
                 <span className="font-medium">{t.entity[e]}</span>
               </label>
@@ -278,7 +397,9 @@ export function Onboarding({
         <Card className="p-8 text-center">
           <div className="mb-3 text-4xl" aria-hidden="true">✓</div>
           <p className="mb-6 text-ink-500">{t.onboarding.completeBody}</p>
-          <Button onClick={() => { setSession(); navigate('/app/dashboard'); }}>{t.nav.dashboard}</Button>
+          <Button onClick={() => void createAndEnter()} disabled={saving} aria-busy={saving}>
+            {saving ? t.onboarding.saving : t.onboarding.createBusiness}
+          </Button>
         </Card>
       )}
     </OnboardingLayout>

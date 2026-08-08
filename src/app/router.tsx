@@ -5,7 +5,7 @@
  * That keeps navigation swappable, makes screens unit-testable without a router,
  * and lets the static preview build render pages without history support.
  */
-import { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import type { MouseEvent, ReactNode } from 'react';
 
 export interface NavValue {
@@ -26,6 +26,18 @@ export function NavProvider({
   onNavigate?: (to: string) => void;
 }) {
   const [path, setPath] = useState(initialPath);
+
+  /**
+   * Keeps the abstraction in step with the outer router.
+   *
+   * Previously `main.tsx` forced a remount on every navigation via a `key`,
+   * which is why this sync was not needed. That remount now has to go: it
+   * would tear down and rebuild the auth provider on every page change,
+   * re-reading the session and flashing a loading state each time. Syncing the
+   * prop keeps browser back/forward working without remounting the tree.
+   */
+  useEffect(() => { setPath(initialPath); }, [initialPath]);
+
   const navigate = useCallback(
     (to: string) => {
       setPath(to);

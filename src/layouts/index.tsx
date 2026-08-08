@@ -1,7 +1,34 @@
 import type { ReactNode } from 'react';
 import { useI18n } from '../i18n';
 import { Link, useNav } from '../app/router';
+import { useAuth } from '../auth/AuthProvider';
 import type { Industry, Locale } from '../types';
+
+/**
+ * Sign-out control.
+ *
+ * Present in the app shell on every screen, not buried in a settings page.
+ * These businesses run on shared back-office computers — a salon counter, a
+ * restaurant office — and leaving a signed-in tax session open because signing
+ * out took three clicks is a real exposure, not a hypothetical one.
+ */
+function SignOutButton() {
+  const { t } = useI18n();
+  const { status, signOut } = useAuth();
+
+  // Hidden in demo mode: there is no session to end, and a control that does
+  // nothing teaches users to distrust it.
+  if (status !== 'signed_in') return null;
+
+  return (
+    <button
+      onClick={() => void signOut()}
+      className="rounded-full border border-line bg-white px-3 py-1.5 text-sm text-content-secondary hover:bg-cream"
+    >
+      {t.common.signOut}
+    </button>
+  );
+}
 
 export function LocaleSwitch({ compact = false }: { compact?: boolean }) {
   const { locale, setLocale, t } = useI18n();
@@ -131,7 +158,10 @@ export function AppLayout({
             </Link>
             <span className="hidden text-sm text-ink-500 sm:inline">· {businessName}</span>
           </div>
-          <LocaleSwitch compact />
+          <div className="flex items-center gap-2">
+            <LocaleSwitch compact />
+            <SignOutButton />
+          </div>
         </div>
       </header>
 

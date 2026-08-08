@@ -158,6 +158,31 @@ export const vi: Dict = {
     haveAccount: 'Đã có tài khoản rồi?',
     noAccount: 'Lần đầu dùng?',
     mfaNote: 'Chúng tôi sẽ nhắn mã xác nhận để giữ an toàn cho tài khoản.',
+    phoneOptional: 'Không bắt buộc',
+    passwordHint: 'Ít nhất 8 ký tự.',
+    signingIn: 'Đang đăng nhập…',
+    creatingAccount: 'Đang tạo tài khoản…',
+    forgotPassword: 'Quên mật khẩu?',
+    resetSent:
+      'Nếu email này có tài khoản, chúng tôi đã gửi liên kết đặt lại mật khẩu. Anh chị kiểm tra hộp thư giúp.',
+    confirmEmailTitle: 'Xác nhận email',
+    confirmEmailBody:
+      'Chúng tôi đã gửi liên kết xác nhận tới email của anh chị. Anh chị mở liên kết đó để hoàn tất tài khoản.',
+    identityUnavailable:
+      'Chúng tôi chưa tải được tài khoản của anh chị. Dữ liệu vẫn an toàn. Anh chị thử lại giúp.',
+    errors: {
+      invalid_credentials: 'Email và mật khẩu không khớp. Anh chị thử lại giúp.',
+      email_not_confirmed:
+        'Anh chị vui lòng xác nhận email trước. Liên kết ở trong hộp thư của anh chị.',
+      email_taken: 'Email này đã có tài khoản. Anh chị thử đăng nhập giúp.',
+      weak_password: 'Anh chị dùng mật khẩu ít nhất 8 ký tự giúp.',
+      invalid_email: 'Anh chị nhập email hợp lệ giúp.',
+      rate_limited: 'Thử quá nhiều lần. Anh chị đợi một phút rồi thử lại giúp.',
+      required_fields: 'Anh chị điền đầy đủ các mục bắt buộc giúp.',
+      network: 'Chúng tôi không kết nối được. Anh chị kiểm tra mạng rồi thử lại giúp.',
+      not_configured: 'Chức năng đăng nhập chưa hoạt động ở môi trường này.',
+      unknown: 'Có lỗi xảy ra. Anh chị thử lại giúp.',
+    },
   },
 
   onboarding: {
@@ -183,6 +208,11 @@ export const vi: Dict = {
       'Chúng tôi chỉ đọc giao dịch. Không bao giờ thấy mật khẩu và không bao giờ chuyển tiền.',
     completeTitle: 'Xong rồi',
     completeBody: 'Chúng tôi đang sắp xếp giao dịch. Việc này mất vài phút.',
+    saving: 'Đang lưu…',
+    createBusiness: 'Tạo cơ sở của tôi',
+    businessNameRequired: 'Anh chị nhập tên cơ sở giúp.',
+    createFailed: 'Chúng tôi chưa lưu được cơ sở. Anh chị thử lại giúp.',
+    signedInAs: 'Đang đăng nhập với',
   },
 
   entity: {

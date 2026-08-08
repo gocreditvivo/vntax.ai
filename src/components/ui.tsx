@@ -36,14 +36,54 @@ export function Card({
   );
 }
 
+/**
+ * `error` renders a message wired to the input via `aria-describedby` and
+ * announced with `role="alert"`. A red border alone fails WCAG 1.4.1 and is
+ * invisible to a screen-reader user, who would otherwise be told nothing about
+ * why the form refused to submit.
+ */
 export function Field({
-  label, hint, children, id,
-}: { label: string; hint?: string; children: ReactNode; id: string }) {
+  label, hint, children, id, error,
+}: { label: string; hint?: string; children: ReactNode; id: string; error?: string }) {
+  const hintId = hint ? `${id}-hint` : undefined;
+  const errorId = error ? `${id}-error` : undefined;
   return (
     <div className="mb-4">
       <label htmlFor={id} className="mb-1.5 block text-sm font-medium text-ink-600">{label}</label>
       {children}
-      {hint && <p className="mt-1.5 text-sm text-ink-500">{hint}</p>}
+      {error && (
+        <p id={errorId} role="alert" className="mt-1.5 text-sm font-medium text-clay-700">
+          {error}
+        </p>
+      )}
+      {hint && !error && <p id={hintId} className="mt-1.5 text-sm text-ink-500">{hint}</p>}
+    </div>
+  );
+}
+
+/**
+ * Form-level error banner, for failures that belong to the submission rather
+ * than to one field — bad credentials, rate limiting, network loss.
+ */
+export function FormError({ message }: { message: string }) {
+  return (
+    <div
+      role="alert"
+      className="mb-4 rounded-sm border border-clay-300 bg-clay-50 px-4 py-3 text-sm text-clay-700"
+    >
+      {message}
+    </div>
+  );
+}
+
+/** Confirmation banner. Used for "check your email" and similar outcomes. */
+export function FormNotice({ message }: { message: string }) {
+  return (
+    <div
+      role="status"
+      className="mb-4 rounded-sm border border-jade-100 bg-jade-50 px-4 py-3 text-sm text-jade-800"
+    >
+      {message}
     </div>
   );
 }
