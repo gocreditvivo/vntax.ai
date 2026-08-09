@@ -420,9 +420,9 @@ export function Onboarding({
  */
 function HeroLedgerCard() {
   return (
-    <div className="relative mx-auto aspect-square w-full max-w-md sm:max-w-lg lg:max-w-2xl" aria-hidden="true">
+    <div className="relative mx-auto aspect-square w-full max-w-sm p-6 sm:max-w-md sm:p-8 lg:max-w-xl" aria-hidden="true">
       <div className="absolute inset-0 rounded-full bg-jade-600/10 blur-3xl" />
-      <svg viewBox="0 0 600 600" className="absolute inset-0 h-full w-full">
+      <svg viewBox="0 0 600 600" className="absolute inset-0 h-full w-full overflow-visible" preserveAspectRatio="xMidYMid meet">
         <defs>
           <linearGradient id="tileFace" x1="0" y1="0" x2="1" y2="1">
             <stop offset="0%" stopColor="#E8E4DA" />
@@ -490,7 +490,7 @@ function HeroLedgerCard() {
         </g>
       </svg>
 
-      <div className="absolute bottom-2 left-1/2 w-max -translate-x-1/2 rounded-xl border border-line bg-white px-4 py-2 font-mono text-xs text-content-primary shadow-lg sm:bottom-6">
+      <div className="absolute -bottom-4 left-1/2 w-max -translate-x-1/2 rounded-xl border border-line bg-white px-4 py-2 font-mono text-xs text-content-primary shadow-lg sm:-bottom-2">
         $3,184 <span className="text-content-muted">est. refund</span>
       </div>
     </div>
