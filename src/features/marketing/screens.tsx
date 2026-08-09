@@ -18,7 +18,7 @@ export function Home() {
           getapril.com's off-white background) instead of the jade block,
           with jade/gold reserved for the illustration and primary CTA. */}
       <section className="relative overflow-hidden bg-ink-50 px-5 py-20 text-content-primary">
-        <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+        <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
           <div>
             <p className="mb-5 inline-flex rounded-full border border-line bg-white px-3 py-1.5 font-mono text-xs uppercase tracking-wide text-content-secondary">
               {t.marketing.trustBadge}
@@ -412,38 +412,85 @@ export function Onboarding({
 }
 
 /**
- * april-inspired hero illustration: a floating "ledger card" built from SVG
- * shapes (no external asset dependency), tilted like a 3D object, with a
- * small monospace-labeled callout — riffing on the IRS-form visual language
- * without borrowing any actual form content.
+ * april-inspired hero illustration, v2: a large glossy 3D-style tile (like
+ * getapril.com's floating gradient "a" mark) built from layered SVG gradients
+ * and a bevel highlight, orbited by smaller neutral tiles for depth — same
+ * composition as april's hero, in the VNTax jade/gold palette. Ledger-card
+ * detail lives on the front face instead of a wordmark.
  */
 function HeroLedgerCard() {
   return (
-    <div className="relative mx-auto hidden aspect-square w-full max-w-sm sm:block" aria-hidden="true">
-      <div className="absolute inset-0 rounded-3xl bg-jade-600/10 blur-3xl" />
-      <svg
-        viewBox="0 0 320 320"
-        className="absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 -rotate-6 drop-shadow-2xl transition-transform duration-700 hover:rotate-0"
-      >
-        <rect x="48" y="24" width="200" height="260" rx="18" fill="#FFFFFF" stroke="#155E4C" strokeWidth="2" />
-        <rect x="68" y="56" width="120" height="12" rx="6" fill="#155E4C" />
-        <rect x="68" y="84" width="160" height="6" rx="3" fill="#C4C2BB" />
-        <rect x="68" y="100" width="160" height="6" rx="3" fill="#C4C2BB" />
-        <rect x="68" y="116" width="110" height="6" rx="3" fill="#C4C2BB" />
-        <line x1="68" y1="142" x2="228" y2="142" stroke="#E5E0D6" strokeWidth="2" />
-        <rect x="68" y="158" width="90" height="8" rx="4" fill="#3D3B35" />
-        <rect x="188" y="158" width="40" height="8" rx="4" fill="#B8894A" />
-        <rect x="68" y="178" width="90" height="8" rx="4" fill="#3D3B35" />
-        <rect x="188" y="178" width="40" height="8" rx="4" fill="#B8894A" />
-        <rect x="68" y="198" width="90" height="8" rx="4" fill="#3D3B35" />
-        <rect x="188" y="198" width="40" height="8" rx="4" fill="#B8894A" />
-        <rect x="68" y="236" width="160" height="2" fill="#E5E0D6" />
-        <rect x="68" y="250" width="70" height="10" rx="5" fill="#0C3830" />
-        <rect x="188" y="250" width="40" height="10" rx="5" fill="#0C3830" />
-        <circle cx="232" cy="40" r="22" fill="#C79A42" />
-        <path d="M224 40l6 6 10-12" stroke="#0C3830" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    <div className="relative mx-auto aspect-square w-full max-w-md sm:max-w-lg lg:max-w-2xl" aria-hidden="true">
+      <div className="absolute inset-0 rounded-full bg-jade-600/10 blur-3xl" />
+      <svg viewBox="0 0 600 600" className="absolute inset-0 h-full w-full">
+        <defs>
+          <linearGradient id="tileFace" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#E8E4DA" />
+            <stop offset="100%" stopColor="#C9C4B6" />
+          </linearGradient>
+          <linearGradient id="tileEdge" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#F5F3EC" />
+            <stop offset="100%" stopColor="#B6B0A0" />
+          </linearGradient>
+          <linearGradient id="mainTile" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#1E7A63" />
+            <stop offset="100%" stopColor="#0C3830" />
+          </linearGradient>
+        </defs>
+
+        {/* orbiting neutral tiles — mirrors april's ring of gray panels */}
+        {[
+          { x: 430, y: 90, r: -18, s: 108, op: 0.95 },
+          { x: 505, y: 190, r: 8, s: 96, op: 0.9 },
+          { x: 520, y: 305, r: -10, s: 100, op: 0.92 },
+          { x: 470, y: 415, r: 20, s: 92, op: 0.85 },
+          { x: 365, y: 480, r: -6, s: 100, op: 0.9 },
+          { x: 245, y: 470, r: 14, s: 84, op: 0.8 },
+          { x: 155, y: 385, r: -16, s: 88, op: 0.75 },
+          { x: 130, y: 260, r: 10, s: 92, op: 0.8 },
+        ].map((tile, i) => (
+          <g key={i} transform={`translate(${tile.x} ${tile.y}) rotate(${tile.r})`} opacity={tile.op}>
+            <rect
+              x={-tile.s / 2}
+              y={-tile.s / 2}
+              width={tile.s}
+              height={tile.s}
+              rx={tile.s * 0.16}
+              fill="url(#tileFace)"
+            />
+            <rect
+              x={-tile.s / 2}
+              y={-tile.s / 2}
+              width={tile.s}
+              height={tile.s * 0.18}
+              rx={tile.s * 0.16}
+              fill="url(#tileEdge)"
+              opacity="0.6"
+            />
+          </g>
+        ))}
+
+        {/* main jade tile, front and center — the "a" mark equivalent */}
+        <g transform="translate(300 290) rotate(-8)">
+          <rect x="-115" y="-115" width="230" height="230" rx="36" fill="url(#mainTile)" />
+          <rect x="-115" y="-115" width="230" height="48" rx="36" fill="#2E9678" opacity="0.35" />
+          {/* ledger-card glyph on the tile face, replacing a wordmark */}
+          <rect x="-58" y="-56" width="92" height="18" rx="5" fill="#F5F3EC" />
+          <rect x="-58" y="-26" width="116" height="10" rx="4" fill="#F5F3EC" opacity="0.75" />
+          <rect x="-58" y="-4" width="116" height="10" rx="4" fill="#F5F3EC" opacity="0.55" />
+          <rect x="-58" y="18" width="80" height="10" rx="4" fill="#F5F3EC" opacity="0.55" />
+          <rect x="-58" y="46" width="70" height="16" rx="6" fill="#C79A42" />
+          <rect x="22" y="46" width="36" height="16" rx="6" fill="#F5F3EC" opacity="0.4" />
+        </g>
+
+        {/* gold checkmark badge, floating in front of the main tile */}
+        <g transform="translate(410 190)">
+          <circle r="38" fill="#C79A42" />
+          <path d="M-16 0l11 11 21-24" stroke="#0C3830" strokeWidth="6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        </g>
       </svg>
-      <div className="absolute -bottom-2 left-1/2 w-max -translate-x-1/2 rounded-xl border border-line bg-white px-4 py-2 font-mono text-xs text-content-primary shadow-lg">
+
+      <div className="absolute bottom-2 left-1/2 w-max -translate-x-1/2 rounded-xl border border-line bg-white px-4 py-2 font-mono text-xs text-content-primary shadow-lg sm:bottom-6">
         $3,184 <span className="text-content-muted">est. refund</span>
       </div>
     </div>
