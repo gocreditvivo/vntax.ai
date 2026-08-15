@@ -70,6 +70,12 @@ npm.cmd run qa:local
 Rebuild and re-run `qa:runtime` without the demo variable before packaging a
 production candidate. A demo bundle is never the production artifact.
 
+Every build emits `dist/vntax-build-manifest.json`, and `npm.cmd run verify`
+finishes with a locked-release preflight. The preflight validates the exact
+artifact surface, source-map and privileged-secret absence, asset hashes, and
+the Vercel header policy. Live-limited and synthetic candidates must be checked
+with their explicit expected surface. See `docs/VNTAX_DEPLOYMENT_RUNBOOK.md`.
+
 ## Current verification evidence
 
 - Default production build: 204/204 application tests, 10/10 RLS-verifier and schema-contract safety
@@ -86,6 +92,11 @@ production candidate. A demo bundle is never the production artifact.
   microphone, and geolocation; sets HSTS, opener/resource isolation, and a CSP
   limited to same-origin app assets, Google Fonts, and Supabase HTTPS/WebSocket
   connections. These headers still require verification on the deployed URL.
+- Release artifact preflight: the exact build must declare its surface in a
+  generated manifest and match the approval target. The preflight also rejects
+  emitted source maps, service credentials/private keys, and weakened required
+  header directives. This is local structural evidence; deployed behavior must
+  still be checked independently.
 - Runner-only note: on this Windows host, system Chrome did not acknowledge one
   Playwright `browser.close()` request within five seconds after the locked-mode
   assertions and screenshots were complete. The test process and exact local
