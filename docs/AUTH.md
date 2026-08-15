@@ -141,6 +141,13 @@ exposure, and deletes both businesses in `finally`. Failed cleanup fails the
 run and prints only the non-secret run ID for approved admin cleanup. Delete the
 two auth users after the run.
 
+Before creating either business, the verifier loads the table/column contract
+from `src/types/database.ts` and performs authenticated `limit=0` queries for
+all 16 VNTax business tables. A missing table or column stops the run before
+mutation. This is a structural compatibility check only; it does not prove the
+provenance or completeness of migration SQL, grants, policies, triggers, or
+private function bodies. See `SCHEMA_RECOVERY_AUDIT.md`.
+
 The fixed credentials formerly present in this repository were tested on
 2026-08-15; both returned `400 invalid_credentials` and issued no token. They
 were removed from the current tree, but Git history should still be treated as

@@ -149,11 +149,14 @@ Standard pattern per business-scoped table: **select** requires `is_member_of`, 
    modes. A real account cannot mount fixture ledger features.
 3. **New verification tool:** `tools/rls-smoke-test.mjs` requires two approved
    disposable accounts, ordinary user tokens, explicit mutation consent, empty
-   account prechecks, and confirmed cleanup. It contains no fixed credentials
-   and never writes directly to `auth.users`.
+   account prechecks, a generated-type structural schema preflight, and
+   confirmed cleanup. It contains no fixed credentials and never writes
+   directly to `auth.users`.
 4. **Blocking infrastructure:** provision a dedicated VNTax project, obtain an
    authoritative export of the missing core schema/RLS migrations, apply the
    complete ordered migration set, then run the authenticated isolation tool.
+   See `docs/SCHEMA_RECOVERY_AUDIT.md` for the sources inspected and the safe
+   acquisition path.
 5. **Persistence remains open.** The service layer in `src/services/` reads and mutates the in-memory `db()` from `src/services/store.ts`, which reseeds from fixtures on every load. The architecture already calls this out as the intended seam. Two viable approaches:
    - **Hydrate + write-through** — load a business's rows into the store on sign-in, then mirror each mutation to Supabase. Smallest diff, keeps all existing sync service code and tests intact.
    - **Full async repositories** — replace `db()` access with Supabase queries inside each service. Cleaner long-term, much larger diff.

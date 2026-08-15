@@ -13,6 +13,11 @@
 import { randomUUID } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 
+import {
+  REQUIRED_VNTAX_TABLES,
+  loadDatabaseContract,
+} from './database-contract.mjs';
+
 export const MUTATION_ACK = 'DELETE-DISPOSABLE-RLS-DATA';
 
 export const SCOPED_TABLES = Object.freeze([
@@ -166,6 +171,9 @@ export async function runRlsVerification(config, options = {}) {
   const cleanup = [];
   const sessions = new Map();
   const created = [];
+  const schemaContract = options.schemaContract === false
+    ? null
+    : (options.schemaContract ?? loadDatabaseContract());
 
   const record = (label, passed, detail = '') => {
     checks.push({ label, passed, detail });
@@ -227,6 +235,26 @@ export async function runRlsVerification(config, options = {}) {
     record('account ' + label + ' starts with zero visible businesses', true);
   };
 
+  const confirmSchemaContract = async (label) => {
+    if (!schemaContract) return;
+    const session = sessions.get(label);
+    for (const table of REQUIRED_VNTAX_TABLES) {
+      const columns = schemaContract.tables[table];
+      const result = await rest(
+        session.token,
+        'GET',
+        table + '?select=' + columns.join(',') + '&limit=0',
+      );
+      if (!result.ok || rows(result) === null) {
+        throw new Error(
+          'Database schema contract failed for ' + table +
+          ' (' + errorSummary(result) + '). No mutation was performed.',
+        );
+      }
+      record('database exposes expected ' + table + ' columns', true);
+    }
+  };
+
   const createBusiness = async (label) => {
     const session = sessions.get(label);
     const result = await rest(session.token, 'POST', 'rpc/create_business', {
@@ -279,6 +307,7 @@ export async function runRlsVerification(config, options = {}) {
     for (const account of config.accounts) await signIn(account);
     await confirmInitiallyEmpty('A');
     await confirmInitiallyEmpty('B');
+    await confirmSchemaContract('A');
 
     const businessA = await createBusiness('A');
     const businessB = await createBusiness('B');

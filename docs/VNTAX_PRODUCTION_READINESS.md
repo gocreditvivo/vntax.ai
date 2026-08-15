@@ -44,6 +44,8 @@ Production requires a genuinely separate VNTax Supabase project. The original
 core schema, RLS, and hardening migrations must be exported through an approved
 admin workflow and committed in reproducible order before later incremental
 migrations are applied. The current checkout cannot bootstrap a fresh project.
+The completed source audit and safe acquisition procedure are recorded in
+`docs/SCHEMA_RECOVERY_AUDIT.md`.
 
 ## Verification commands
 
@@ -70,7 +72,7 @@ production candidate. A demo bundle is never the production artifact.
 
 ## Current verification evidence
 
-- Default production build: 196/196 application tests, 6/6 RLS-verifier safety
+- Default production build: 196/196 application tests, 9/9 RLS-verifier and schema-contract safety
   tests, TypeScript, zero-warning lint, production bundle, and dependency audit
   pass locally.
 - Locked-runtime Chrome check: homepage states the account boundary; signup and

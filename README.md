@@ -87,7 +87,7 @@ Every app screen implements four states: **loading**, **empty**, **error**,
 npm run test
   4 files, 196 tests, 0 failed
 npm run test:rls-tool
-  6 verifier safety tests, 0 failed
+  9 verifier and schema-contract safety tests, 0 failed
 ```
 
 | Group | Covers |
