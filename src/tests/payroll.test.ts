@@ -14,8 +14,27 @@ describe('2026 Washington, DC payroll engine', () => {
   it('uses the two official 2026 DC minimum-wage periods', () => {
     expect(dcRulesFor('2026-06-30').minimumWage).toBe(17.95);
     expect(dcRulesFor('2026-06-30').tippedCashWage).toBe(10);
-    expect(dcRulesFor('2026-07-01').minimumWage).toBe(18.4);
-    expect(dcRulesFor('2026-07-01').tippedCashWage).toBe(10.3);
+    expect(dcRulesFor('2026-07-07').minimumWage).toBe(18.4);
+    expect(dcRulesFor('2026-07-07').tippedCashWage).toBe(10.3);
+  });
+
+  it('fails closed when one workweek crosses a year or July 1 rate boundary', () => {
+    expect(() => dcRulesFor('2026-01-06')).toThrow(/entirely inside 2026/);
+    expect(() => dcRulesFor('2026-07-01')).toThrow(/crosses the July 1/);
+    expect(() => dcRulesFor('2026-07-06')).toThrow(/crosses the July 1/);
+    expect(dcRulesFor('2026-07-07').effectiveDate).toBe('2026-07-01');
+  });
+
+  it('rejects impossible calendar dates', () => {
+    expect(() => dcRulesFor('2026-02-30')).toThrow(/valid 2026/);
+    expect(() => dcRulesFor('2026-13-01')).toThrow(/valid 2026/);
+  });
+
+  it('requires a valid 2026 pay date on or after the workweek', () => {
+    expect(() => dcRulesFor('2026-08-08', 0.027, '2027-01-02')).toThrow(/2026 pay date/);
+    expect(() => dcRulesFor('2026-08-08', 0.027, '2026-02-30')).toThrow(/valid 2026 pay date/);
+    expect(() => dcRulesFor('2026-08-08', 0.027, '2026-08-07')).toThrow(/cannot be before/);
+    expect(dcRulesFor('2026-08-08', 0.027, '2026-08-12').taxYear).toBe(2026);
   });
 
   it('rejects a stale or unsupported tax year', () => {
@@ -37,6 +56,11 @@ describe('2026 Washington, DC payroll engine', () => {
     expect(result.employeeMedicare).toBe(11.6);
     expect(result.employerSocialSecurity).toBe(49.6);
     expect(result.employerMedicare).toBe(11.6);
+  });
+
+  it('blocks regular hours above 40 in the weekly hourly workflow', () => {
+    const result = calculateWorker(worker({ regularHours: 41 }), dcRulesFor('2026-08-08'));
+    expect(result.blockers.join(' ')).toMatch(/move excess weekly hours to overtime/);
   });
 
   it('calculates DC tipped overtime and weekly tip-credit makeup', () => {
@@ -64,6 +88,21 @@ describe('2026 Washington, DC payroll engine', () => {
     expect(result.federalIncomeTaxWages).toBe(600);
   });
 
+  it('keeps employee deductions in the cash-funding reconciliation', () => {
+    const result = calculateWorker(worker({
+      section125Deduction: 100, retirement401k: 100, otherAfterTaxDeductions: 50,
+    }), dcRulesFor('2026-08-08'));
+    expect(result.deductionRemittances).toBe(250);
+    expect(result.warnings.join(' ')).toMatch(/section 125 election/);
+    expect(result.warnings.join(' ')).toMatch(/401\(k\) limits/);
+    expect(result.warnings.join(' ')).toMatch(/after-tax deductions/);
+    expect(result.fundingNeeded).toBeCloseTo(
+      result.paymentToWorker + result.deductionRemittances + result.federalDeposit + result.dcWithholding +
+      result.estimatedFuta + result.dcUnemploymentInsurance + result.dcAdministrativeAssessment,
+      2,
+    );
+  });
+
   it('withholds Additional Medicare only as wages cross $200,000', () => {
     const result = calculateWorker(worker({ rateOrPay: 1_000, regularHours: 1, ytdMedicareWages: 199_500 }), dcRulesFor('2026-08-08'));
     expect(result.employeeAdditionalMedicare).toBe(4.5);
@@ -74,6 +113,16 @@ describe('2026 Washington, DC payroll engine', () => {
     const result = calculateWorker(worker(), dcRulesFor('2026-08-08'));
     expect(result.dcUnemploymentInsurance).toBe(21.6);
     expect(result.dcAdministrativeAssessment).toBe(1.6);
+  });
+
+  it('uses an established employer rate from the 2026 DOES notice', () => {
+    const result = calculateWorker(worker(), dcRulesFor('2026-08-08', 0.074));
+    expect(result.dcUnemploymentInsurance).toBe(59.2);
+    expect(result.dcAdministrativeAssessment).toBe(1.6);
+  });
+
+  it('rejects a DC UI rate outside the supported notice range', () => {
+    expect(() => dcRulesFor('2026-08-08', 0.101)).toThrow(/rate notice/);
   });
 
   it('does not treat a contractor payment as employee payroll', () => {
@@ -88,6 +137,7 @@ describe('2026 Washington, DC payroll engine', () => {
     const results = [calculateWorker(worker(), rules), calculateWorker(worker({ id: 'w2', name: 'Second' }), rules)];
     const totals = totalPayroll(results);
     expect(totals.grossWages).toBe(1_600);
+    expect(totals.federalWithholding).toBe(200);
     expect(totals.paymentsToWorkers).toBe(results[0].paymentToWorker * 2);
     expect(totals.fundingNeeded).toBe(results[0].fundingNeeded * 2);
   });

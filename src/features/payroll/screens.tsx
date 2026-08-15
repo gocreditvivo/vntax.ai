@@ -21,6 +21,7 @@ const words = (vi: boolean) => vi ? {
   subtitle: 'Nhập từng bước, xem lại trước khi xuất. Chỉ dùng cho một tuần làm việc tại Washington, DC trong năm 2026.',
   steps: ['Tuần lương', 'Người làm', 'Xem lại'], business: 'Tên cơ sở', weekEnd: 'Ngày cuối tuần làm việc',
   payDate: 'Ngày trả lương', next: 'Tiếp tục', back: 'Quay lại', add: 'Thêm người', remove: 'Xóa',
+  uiRate: 'Thuế suất UI DC năm 2026 (%)', uiRateHelp: 'Cơ sở mới dùng 2,7%. Cơ sở đang hoạt động phải nhập thuế suất trên thông báo DOES năm 2026.',
   person: 'Tên người làm', type: 'Loại người làm', rate: 'Mức lương giờ / tiền trả tuần',
   hours: 'Giờ thường', overtime: 'Giờ tăng ca', tips: 'Tiền tip đã báo cáo',
   tipsInCheck: 'Trả tiền tip này trong kỳ lương', taxDetails: 'Thuế, khoản trừ và số từ đầu năm',
@@ -28,6 +29,7 @@ const words = (vi: boolean) => vi ? {
   fed: 'Thuế liên bang giữ lại', dc: 'Thuế DC giữ lại', ytdSs: 'Lương Social Security từ đầu năm',
   ytdMed: 'Lương Medicare từ đầu năm', ytdFuta: 'Lương FUTA từ đầu năm', ytdUi: 'Lương DC UI từ đầu năm',
   gross: 'Tổng lương chịu thuế', pay: 'Tiền trả người làm', employer: 'Thuế phía chủ',
+  remit: 'Khoản trừ cần chuyển',
   deposit: 'Khoản nộp liên bang', funding: 'Tổng tiền cần chuẩn bị', export: 'Tải CSV để xem lại',
   blocked: 'Cần sửa trước khi dùng', warning: 'Cần kiểm tra',
   withholding: 'Thuế thu nhập liên bang và DC phải nhập từ W-4/D-4 và hướng dẫn hiện hành. VNTax không đoán số này.',
@@ -38,6 +40,7 @@ const words = (vi: boolean) => vi ? {
   subtitle: 'Answer a few clear questions, then review before export. For one Washington, DC workweek in 2026 only.',
   steps: ['Workweek', 'People', 'Review'], business: 'Business name', weekEnd: 'Workweek ending',
   payDate: 'Pay date', next: 'Continue', back: 'Back', add: 'Add person', remove: 'Remove',
+  uiRate: '2026 DC UI employer rate (%)', uiRateHelp: 'New employers use 2.7%. Established employers must enter the rate on their 2026 DOES notice.',
   person: 'Worker name', type: 'Worker type', rate: 'Hourly rate / weekly payment',
   hours: 'Regular hours', overtime: 'Overtime hours', tips: 'Reported tips',
   tipsInCheck: 'Include these tips in this payment', taxDetails: 'Taxes, deductions, and year-to-date wages',
@@ -45,6 +48,7 @@ const words = (vi: boolean) => vi ? {
   fed: 'Federal income tax withholding', dc: 'DC income tax withholding', ytdSs: 'YTD Social Security wages',
   ytdMed: 'YTD Medicare wages', ytdFuta: 'YTD FUTA wages', ytdUi: 'YTD DC UI wages',
   gross: 'Gross taxable wages', pay: 'Payments to workers', employer: 'Employer payroll taxes',
+  remit: 'Deductions to remit',
   deposit: 'Federal deposit', funding: 'Total funding needed', export: 'Download review CSV',
   blocked: 'Fix before use', warning: 'Review required',
   withholding: 'Federal and DC income-tax withholding must come from the employee W-4/D-4 and current instructions. VNTax does not guess it.',
@@ -73,6 +77,16 @@ function localMessage(message: string, vi: boolean): string {
     'Deductions and withholding exceed this payment.': 'Khoản trừ và thuế giữ lại lớn hơn số tiền trả.',
     'Federal withholding is $0; verify the employee W-4 and 2026 Publication 15-T.': 'Thuế liên bang giữ lại đang là $0; kiểm tra W-4 và Publication 15-T năm 2026.',
     'DC withholding is $0; verify the employee D-4 and current DC instructions.': 'Thuế DC giữ lại đang là $0; kiểm tra D-4 và hướng dẫn DC hiện hành.',
+    'Enter a valid 2026 Washington, DC workweek ending date.': 'Nhập ngày kết thúc tuần làm việc hợp lệ tại Washington, DC trong năm 2026.',
+    'The worksheet only supports a seven-day workweek entirely inside 2026.': 'Bảng này chỉ hỗ trợ tuần bảy ngày nằm hoàn toàn trong năm 2026.',
+    'This workweek crosses the July 1 DC wage change. Split hours into periods before and after July 1.': 'Tuần này đi qua ngày đổi lương DC 1 tháng 7. Hãy tách giờ trước và sau ngày 1 tháng 7.',
+    'Enter a valid 2026 pay date.': 'Nhập ngày trả lương hợp lệ trong năm 2026.',
+    'Pay date cannot be before the workweek ending date.': 'Ngày trả lương không thể trước ngày kết thúc tuần làm việc.',
+    "Enter a DC unemployment rate from the employer's 2026 rate notice.": 'Nhập thuế suất thất nghiệp DC từ thông báo năm 2026 của chủ cơ sở.',
+    'Regular hours exceed 40; move excess weekly hours to overtime.': 'Giờ thường vượt quá 40; chuyển giờ vượt quá trong tuần sang giờ tăng ca.',
+    'Confirm the section 125 election is exempt from FIT, FICA, and FUTA for this worker; benefit treatment varies.': 'Xác nhận lựa chọn Section 125 của người làm này được miễn FIT, FICA và FUTA; cách xử lý tùy loại quyền lợi.',
+    'Confirm plan eligibility and year-to-date 401(k) limits; this worksheet does not test plan limits.': 'Xác nhận điều kiện của chương trình và giới hạn 401(k) từ đầu năm; bảng này không kiểm tra giới hạn chương trình.',
+    'Confirm authorization and any applicable limits for other after-tax deductions.': 'Xác nhận quyền khấu trừ và mọi giới hạn áp dụng cho các khoản trừ sau thuế khác.',
   };
   if (exact[message]) return exact[message];
   if (message.startsWith('Hourly rate is below the DC minimum wage')) return message.replace('Hourly rate is below the DC minimum wage of', 'Mức lương giờ thấp hơn lương tối thiểu DC là');
@@ -98,10 +112,15 @@ export function Payroll() {
   const [business, setBusiness] = useState('Saigon Kitchen');
   const [weekEnd, setWeekEnd] = useState('2026-08-08');
   const [payDate, setPayDate] = useState('2026-08-12');
+  const [dcUiRatePercent, setDcUiRatePercent] = useState(2.7);
   const [workers, setWorkers] = useState<PayrollWorkerInput[]>([
     { ...blankWorker('worker-1'), name: 'Employee 1', kind: 'w2_tipped', rateOrPay: 10.3 },
   ]);
-  const rules = useMemo(() => { try { return dcRulesFor(weekEnd); } catch { return null; } }, [weekEnd]);
+  const ruleState = useMemo(() => {
+    try { return { rules: dcRulesFor(weekEnd, dcUiRatePercent / 100, payDate), error: '' }; }
+    catch (error) { return { rules: null, error: error instanceof Error ? error.message : 'Invalid payroll rules.' }; }
+  }, [weekEnd, payDate, dcUiRatePercent]);
+  const rules = ruleState.rules;
   const results = useMemo(() => rules ? workers.map((worker) => calculateWorker(worker, rules)) : [], [rules, workers]);
   const totals = useMemo(() => totalPayroll(results), [results]);
   useEffect(() => {
@@ -114,9 +133,9 @@ export function Payroll() {
     setWorkers((all) => all.map((worker) => worker.id === id ? { ...worker, [key]: value } : worker));
 
   function download() {
-    const head = ['Business', 'Workweek ending', 'Pay date', 'Worker', 'Type', 'Gross wages', 'Employee FICA', 'Federal withholding', 'DC withholding', 'Payment', 'Employer payroll taxes', 'Federal deposit', 'Funding needed', 'Status'];
-    const rows = results.map((r, index) => [business, weekEnd, payDate, r.name, labels[r.kind], r.grossWages,
-      r.employeeFica, workers[index].federalWithholding, r.dcWithholding, r.paymentToWorker,
+    const head = ['Business', 'Workweek ending', 'Pay date', 'DC UI employer rate', 'Worker', 'Type', 'Gross wages', 'Employee FICA', 'Federal withholding', 'DC withholding', 'Payment', 'Deductions to remit', 'Employer payroll taxes', 'Federal deposit', 'Funding needed', 'Status'];
+    const rows = results.map((r) => [business, weekEnd, payDate, rules?.dcUiEmployerRate ?? '', r.name, labels[r.kind], r.grossWages,
+      r.employeeFica, r.federalWithholding, r.dcWithholding, r.paymentToWorker, r.deductionRemittances,
       r.employerPayrollTaxes, r.federalDeposit, r.fundingNeeded,
       r.blockers.length ? 'BLOCKED' : r.warnings.length ? 'REVIEW' : 'READY FOR PROFESSIONAL REVIEW']);
     const blob = new Blob(['\uFEFF' + [head, ...rows].map((row) => row.map(csvCell).join(',')).join('\n')], { type: 'text/csv;charset=utf-8' });
@@ -137,9 +156,10 @@ export function Payroll() {
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block text-sm text-content-secondary"><span className="mb-1 block">{c.weekEnd}</span><Input type="date" value={weekEnd} onChange={(e) => setWeekEnd(e.target.value)} /></label>
         <label className="block text-sm text-content-secondary"><span className="mb-1 block">{c.payDate}</span><Input type="date" value={payDate} onChange={(e) => setPayDate(e.target.value)} /></label>
+        <div><NumberField label={c.uiRate} value={dcUiRatePercent} set={setDcUiRatePercent} /><p className="mt-1 text-xs text-content-muted">{c.uiRateHelp}</p></div>
       </div>
-      {!rules && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-800">Only 2026 Washington, DC workweeks are supported.</p>}
-      {rules && <p className="rounded-lg bg-cream p-3 text-sm text-content-secondary">DC rates effective {rules.effectiveDate}: minimum {dollars(rules.minimumWage)} · tipped cash wage {dollars(rules.tippedCashWage)}.</p>}
+      {!rules && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-800">{localMessage(ruleState.error, isVietnamese)}</p>}
+      {rules && <p className="rounded-lg bg-cream p-3 text-sm text-content-secondary">DC rates effective {rules.effectiveDate}: minimum {dollars(rules.minimumWage)} · tipped cash wage {dollars(rules.tippedCashWage)} · UI {(rules.dcUiEmployerRate * 100).toFixed(2)}%.</p>}
       <Button disabled={!rules || !business.trim()} onClick={() => setStep(2)}>{c.next}</Button>
     </Card>}
 
@@ -177,8 +197,8 @@ export function Payroll() {
     </div>}
 
     {step === 3 && <div className="space-y-5">
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{[[c.gross, totals.grossWages], [c.pay, totals.paymentsToWorkers], [c.employer, totals.employerPayrollTaxes], [c.funding, totals.fundingNeeded]].map(([label, amount]) => <Card key={String(label)} className="p-4"><p className="text-sm text-content-muted">{label}</p><p className="mt-1 font-mono text-2xl font-semibold">{dollars(Number(amount))}</p></Card>)}</div>
-      <Card className="p-5"><h2 className="font-semibold">{c.deposit}: {dollars(totals.federalDeposit)}</h2><p className="mt-2 text-sm text-content-secondary">{c.withholding}</p></Card>
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">{[[c.gross, totals.grossWages], [c.pay, totals.paymentsToWorkers], [c.remit, totals.deductionRemittances], [c.employer, totals.employerPayrollTaxes], [c.funding, totals.fundingNeeded]].map(([label, amount]) => <Card key={String(label)} className="p-4"><p className="text-sm text-content-muted">{label}</p><p className="mt-1 font-mono text-2xl font-semibold">{dollars(Number(amount))}</p></Card>)}</div>
+      <Card className="p-5"><h2 className="font-semibold">{c.deposit}: {dollars(totals.federalDeposit)}</h2><p className="mt-2 text-sm text-content-secondary">{c.uiRate}: {(rules!.dcUiEmployerRate * 100).toFixed(2)}%</p><p className="mt-2 text-sm text-content-secondary">{c.withholding}</p></Card>
       {results.map((result) => <Card key={result.workerId} className="p-5"><div className="flex justify-between gap-3"><div><h2 className="font-semibold">{result.name || c.person}</h2><p className="text-sm text-content-muted">{labels[result.kind]}</p></div><p className="font-mono text-xl font-semibold">{dollars(result.paymentToWorker)}</p></div>
         {result.blockers.length > 0 && <div className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-900"><b>{c.blocked}</b><ul className="mt-2 list-disc pl-5">{result.blockers.map((item) => <li key={item}>{localMessage(item, isVietnamese)}</li>)}</ul></div>}
         {result.warnings.length > 0 && <div className="mt-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-900"><b>{c.warning}</b><ul className="mt-2 list-disc pl-5">{result.warnings.map((item) => <li key={item}>{localMessage(item, isVietnamese)}</li>)}</ul></div>}
