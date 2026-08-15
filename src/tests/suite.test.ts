@@ -101,9 +101,9 @@ describe('compliance — product boundary language', () => {
     expect(vi.marketing.workflowProof.toLowerCase()).not.toMatch(/refund|\$/);
   });
 
-  it('states the customer promise exactly as specified', () => {
+  it('states an accurate controlled-preview promise', () => {
     expect(en.legal.promise).toBe(
-      'We organize your business finances and help you prepare for tax time.'
+      'Preview planned organization workflows with fictional records.'
     );
   });
 

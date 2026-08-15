@@ -817,8 +817,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      can_admin_business: { Args: { b: string }; Returns: boolean }
-      can_write_business: { Args: { b: string }; Returns: boolean }
       create_business: {
         Args: {
           p_address?: Json
@@ -861,9 +859,6 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      is_member_of: { Args: { b: string }; Returns: boolean }
-      role_in_business: { Args: { b: string }; Returns: string }
-      shares_business_with: { Args: { other: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never

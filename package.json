@@ -11,6 +11,7 @@
     "test": "vitest run --configLoader runner --pool=threads --maxWorkers=1 --no-file-parallelism",
     "test:e2e": "playwright test",
     "qa:local": "node tools/qa-local.mjs",
+    "qa:runtime": "node tools/qa-runtime-boundary.mjs",
     "lint": "eslint src --max-warnings 0",
     "verify": "npm run typecheck && npm run lint && npm run test && npm run build && npm run audit",
     "evidence": "bash tools/collect-evidence.sh",

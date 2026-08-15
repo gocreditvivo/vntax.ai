@@ -15,10 +15,9 @@
 import type { EntityType, Industry } from '../../types';
 
 export interface OnboardingDraft {
-  ownerName: string;
-  ownerPhone: string;
   legalName: string;
   dbaName: string;
+  businessPhone: string;
   line1: string;
   city: string;
   state: string;
@@ -30,10 +29,9 @@ export interface OnboardingDraft {
 const KEY = 'vntax.onboarding.draft';
 
 export const emptyDraft: OnboardingDraft = {
-  ownerName: '',
-  ownerPhone: '',
   legalName: '',
   dbaName: '',
+  businessPhone: '',
   line1: '',
   city: '',
   state: '',
@@ -46,10 +44,15 @@ export function readDraft(): OnboardingDraft {
   try {
     const raw = window.sessionStorage.getItem(KEY);
     if (!raw) return { ...emptyDraft };
-    const parsed = JSON.parse(raw) as Partial<OnboardingDraft>;
+    const parsed = JSON.parse(raw) as Partial<OnboardingDraft> & { ownerPhone?: string };
     // Spread over the empty draft rather than trusting the parsed object: a
     // draft written by an older build may be missing keys added since.
-    return { ...emptyDraft, ...parsed };
+    return {
+      ...emptyDraft,
+      ...parsed,
+      // One pre-release draft used ownerPhone for this business-level field.
+      businessPhone: parsed.businessPhone || parsed.ownerPhone || '',
+    };
   } catch {
     return { ...emptyDraft };
   }

@@ -9,7 +9,8 @@
  *   Telling someone "you should deduct X"     -> advice, requires a credentialed
  *                                                preparer (EA/CPA/attorney)
  *
- * So every entry ends by routing any decision to a human ("routeToHuman").
+ * So every entry ends by routing any decision to current official guidance or
+ * an independently selected qualified professional ("routeToHuman").
  * The bot has the eyes of a professional (it knows what to explain) but never
  * the mouth of one (it never tells you what to do). Do not add an entry that
  * tells the reader what to claim, elect, or file, or that predicts a number
@@ -38,8 +39,8 @@ export interface Explainer {
 
 /** The universal routing line - appended to the end of every explanation. */
 export const ROUTE_TO_HUMAN: Record<ScriptLocale, string> = {
-  en: 'This explains the idea in general. For your own situation, a real person on our team takes a look - we do not decide that automatically.',
-  vi: 'Ph\u1EA7n n\u00E0y gi\u1EA3i th\u00EDch chung th\u00F4i. C\u00F2n tr\u01B0\u1EDDng h\u1EE3p ri\u00EAng c\u1EE7a b\u1EA1n, m\u1ED9t ng\u01B0\u1EDDi th\u1EADt trong nh\u00F3m s\u1EBD xem - ch\u00Fang t\u00F4i kh\u00F4ng t\u1EF1 \u0111\u1ED9ng quy\u1EBFt \u0111i\u1EC1u \u0111\u00F3.',
+  en: 'This explains the idea in general. For your own situation, check current official guidance or consult a qualified tax professional. This demo does not create a review request.',
+  vi: 'Ph\u1EA7n n\u00E0y ch\u1EC9 gi\u1EA3i th\u00EDch chung. V\u1EDBi tr\u01B0\u1EDDng h\u1EE3p ri\u00EAng, h\u00E3y xem h\u01B0\u1EDBng d\u1EABn ch\u00EDnh th\u1EE9c hi\u1EC7n h\u00E0nh ho\u1EB7c h\u1ECFi chuy\u00EAn gia thu\u1EBF \u0111\u1EE7 chuy\u00EAn m\u00F4n. B\u1EA3n m\u1EABu n\u00E0y kh\u00F4ng t\u1EA1o y\u00EAu c\u1EA7u xem h\u1ED3 s\u01A1.',
 };
 
 export const TAX_BRAIN = {

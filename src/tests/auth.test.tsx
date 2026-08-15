@@ -18,7 +18,7 @@ import type { AuthError } from '@supabase/supabase-js';
 
 import type * as EnvModule from '../lib/env';
 import type * as SupabaseModule from '../lib/supabase';
-import { looksLikeServiceRoleKey } from '../lib/env';
+import { looksLikeServiceRoleKey, resolveRuntimeMode } from '../lib/env';
 import { parseNumeric } from '../lib/supabase';
 import {
   isValidEmail, isValidPassword, mapAuthError, MIN_PASSWORD_LENGTH,
@@ -64,6 +64,20 @@ describe('service-role key detection', () => {
     expect(looksLikeServiceRoleKey('not-a-key')).toBe(false);
     expect(looksLikeServiceRoleKey('')).toBe(false);
     expect(looksLikeServiceRoleKey('a.b.c')).toBe(false);
+  });
+});
+
+describe('runtime mode boundary', () => {
+  it('locks a build when production credentials and explicit demo opt-in are both absent', () => {
+    expect(resolveRuntimeMode(false, false)).toBe('locked');
+  });
+
+  it('allows fixtures only after explicit synthetic demo opt-in', () => {
+    expect(resolveRuntimeMode(false, true)).toBe('synthetic_demo');
+  });
+
+  it('never lets demo mode replace a configured live account boundary', () => {
+    expect(resolveRuntimeMode(true, true)).toBe('live_limited');
   });
 });
 
@@ -281,6 +295,7 @@ interface FakeOptions {
   signInResult?: { error: AuthError | null };
   profile?: Record<string, unknown> | null;
   memberships?: Record<string, unknown>[];
+  business?: Record<string, unknown> | null;
 }
 
 let fake: FakeOptions;
@@ -298,7 +313,11 @@ vi.mock('../lib/supabase', async () => {
   const actual = await vi.importActual<typeof SupabaseModule>('../lib/supabase');
 
   const table = (name: string) => {
-    const rows = name === 'profiles' ? fake.profile : fake.memberships ?? [];
+    const rows = name === 'profiles'
+      ? fake.profile
+      : name === 'businesses'
+        ? fake.business ?? null
+        : fake.memberships ?? [];
     const builder: Record<string, unknown> = {};
     const chain = () => builder;
     Object.assign(builder, {
@@ -395,6 +414,67 @@ describe('auth guard', () => {
       expect(screen.getByRole('heading', { name: viDict.auth.loginTitle })).toBeInTheDocument();
     });
   });
+
+  it('never mounts fixture ledger screens for a configured real account', async () => {
+    const businessId = 'bbbb1111-2222-4333-8444-555566667777';
+    fake = {
+      session: SESSION,
+      profile: PROFILE,
+      memberships: [{
+        user_id: SESSION.user.id,
+        business_id: businessId,
+        role: 'owner',
+        invited_by_user_id: null,
+        accepted_at: '2026-08-15T00:00:00Z',
+        grant_id: null,
+      }],
+      business: {
+        id: businessId,
+        legal_name: 'Live Pilot LLC',
+        dba_name: null,
+        industry: 'restaurant',
+        entity_type: 'unknown',
+        address: {},
+        phone: null,
+        email: null,
+        started_year: null,
+        location_count: 1,
+        accounting_method: 'unknown',
+        fiscal_year_end_month: 12,
+        employee_count: null,
+        contractor_count: null,
+        has_ein: false,
+        sales_tax_registered: null,
+        payroll_provider: null,
+        merchant_processor: null,
+        delivery_platforms: [],
+        handles_cash: false,
+        prior_year_return_available: null,
+        created_at: '2026-08-15T00:00:00Z',
+        created_by: SESSION.user.id,
+        updated_at: '2026-08-15T00:00:00Z',
+      },
+    };
+
+    const App = await importApp();
+    render(<App initialPath="/app/transactions" initialLocale="en" />);
+
+    expect(await screen.findByRole('heading', { name: en.states.livePilotTitle })).toBeInTheDocument();
+    expect(screen.queryByText('Phở Bình Minh')).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: en.nav.transactions })).not.toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: en.nav.payroll }).length).toBeGreaterThan(0);
+  });
+
+  it('does not show synthetic connection actions during live onboarding', async () => {
+    fake = { session: SESSION, profile: PROFILE, memberships: [] };
+
+    const App = await importApp();
+    render(<App initialPath="/onboarding/connections" initialLocale="en" />);
+
+    expect(await screen.findByText(en.onboarding.connectionsUnavailable)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: en.connections.connect })).not.toBeInTheDocument();
+    expect(screen.getByText(en.states.livePilotBanner)).toBeInTheDocument();
+  });
 });
 
 describe('login form', () => {
@@ -413,6 +493,14 @@ describe('login form', () => {
     await user.click(await screen.findByRole('button', { name: en.common.signIn }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(en.auth.errors.required_fields);
+  });
+
+  it('does not collect an unused phone number during signup', async () => {
+    const App = await importApp();
+    render(<App initialPath="/auth/sign-up" initialLocale="en" />);
+
+    expect(await screen.findByRole('heading', { name: en.auth.signUpTitle })).toBeInTheDocument();
+    expect(screen.queryByLabelText(en.auth.phone)).not.toBeInTheDocument();
   });
 
   it('shows a translated error on bad credentials, and does not name the field', async () => {

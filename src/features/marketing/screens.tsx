@@ -12,6 +12,7 @@ import type { EntityType, Industry } from '../../types';
 
 export function Home() {
   const { t } = useI18n();
+  const { status } = useAuth();
   return (
     <MarketingLayout>
       {/* hero — april-inspired, light variant: pale neutral field (like
@@ -20,6 +21,13 @@ export function Home() {
       <section className="relative overflow-hidden bg-ink-50 px-5 py-20 text-content-primary">
         <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
           <div>
+            <p className="mb-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+              {status === 'demo'
+                ? t.states.demoBanner
+                : status === 'unconfigured'
+                  ? t.states.productUnavailableBody
+                  : t.states.livePilotBanner}
+            </p>
             <p className="mb-5 inline-flex rounded-full border border-line bg-white px-3 py-1.5 font-mono text-xs uppercase tracking-wide text-content-secondary">
               {t.marketing.trustBadge}
             </p>
@@ -137,10 +145,8 @@ const ENTITY_TYPES: EntityType[] = [
  * `refreshIdentity()` re-reads memberships so the app shell can resolve a role
  * for the new business immediately rather than on the next page load.
  *
- * The owner name and phone collected here are not written to `profiles`: the
- * signup metadata already populated that row via `on_auth_user_created`, and
- * overwriting it from the wizard would silently discard whatever the user
- * typed at signup. These fields prefill from the signed-in profile instead.
+ * Identity is collected only at signup. This wizard does not ask for it again;
+ * the optional phone below belongs to the business record, not the owner.
  */
 export function Onboarding({
   step, fallbackIndustry = 'restaurant',
@@ -192,7 +198,7 @@ export function Onboarding({
 
     // Demo mode has no database. The wizard still completes so the preview
     // build and the unit suite can walk the whole flow.
-    if (status === 'unconfigured') {
+    if (status === 'demo') {
       clearDraft();
       navigate('/app/dashboard');
       return;
@@ -206,7 +212,7 @@ export function Onboarding({
       dbaName: draft.dbaName,
       industry: draft.industry,
       entityType: draft.entityType,
-      phone: draft.ownerPhone,
+      phone: draft.businessPhone,
       address: {
         line1: draft.line1,
         line2: null,
@@ -237,6 +243,9 @@ export function Onboarding({
 
   return (
     <OnboardingLayout step={idx} total={STEPS.length} title={titles[step] ?? ''}>
+      <p className="mb-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+        {status === 'demo' ? t.states.demoBanner : t.states.livePilotBanner}
+      </p>
       {saveError && <FormError message={saveError} />}
 
       {step === 'language' && (
@@ -251,29 +260,12 @@ export function Onboarding({
 
       {step === 'owner' && (
         <Card className="p-6">
+          <p className="mb-4 text-sm text-content-muted">{t.onboarding.ownerBody}</p>
           {identity && (
             <p className="mb-4 text-sm text-content-muted">
               {t.onboarding.signedInAs} {identity.email}
             </p>
           )}
-          <Field id="oname" label={t.auth.ownerName}>
-            <Input
-              id="oname"
-              value={draft.ownerName || identity?.displayName || ''}
-              onChange={(e) => set('ownerName', e.target.value)}
-              autoComplete="name"
-            />
-          </Field>
-          <Field id="ophone" label={t.auth.phone} hint={t.auth.phoneOptional}>
-            <Input
-              id="ophone"
-              type="tel"
-              inputMode="tel"
-              autoComplete="tel"
-              value={draft.ownerPhone}
-              onChange={(e) => set('ownerPhone', e.target.value)}
-            />
-          </Field>
           <Button className="w-full" onClick={() => next('business')}>{t.common.continue}</Button>
         </Card>
       )}
@@ -291,6 +283,16 @@ export function Onboarding({
           </Field>
           <Field id="dba" label={t.onboarding.dbaName}>
             <Input id="dba" value={draft.dbaName} onChange={(e) => set('dbaName', e.target.value)} />
+          </Field>
+          <Field id="business-phone" label={t.onboarding.businessPhone} hint={t.auth.phoneOptional}>
+            <Input
+              id="business-phone"
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              value={draft.businessPhone}
+              onChange={(e) => set('businessPhone', e.target.value)}
+            />
           </Field>
           <Field id="addr" label={t.onboarding.address} hint={t.onboarding.localityNote}>
             <Input
@@ -385,14 +387,22 @@ export function Onboarding({
       {step === 'connections' && (
         <Card className="p-6">
           <p className="mb-5 text-ink-500">{t.onboarding.connectionsBody}</p>
-          <div className="mb-5 space-y-2">
-            {(['bank', 'credit_card', 'payment_processor'] as const).map((k) => (
-              <div key={k} className="flex items-center justify-between rounded-xl border border-line px-4 py-3">
-                <span className="font-medium">{t.connections[k]}</span>
-                <Button variant="secondary" size="sm">{t.connections.connect}</Button>
-              </div>
-            ))}
-          </div>
+          {status === 'demo' ? (
+            <div className="mb-5 space-y-2">
+              {(['bank', 'credit_card', 'payment_processor'] as const).map((k) => (
+                <div key={k} className="flex items-center justify-between rounded-xl border border-line px-4 py-3">
+                  <span className="font-medium">{t.connections[k]}</span>
+                  <span className="rounded-full bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-900">
+                    {t.states.demoLabel}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="mb-5 rounded-xl border border-line bg-cream px-4 py-3 text-sm text-content-muted">
+              {t.onboarding.connectionsUnavailable}
+            </p>
+          )}
           <p className="mb-5 text-sm text-ink-500">{t.connections.neverCredentials}</p>
           <Button className="w-full" onClick={() => next('complete')}>{t.common.continue}</Button>
         </Card>
@@ -401,9 +411,11 @@ export function Onboarding({
       {step === 'complete' && (
         <Card className="p-8 text-center">
           <div className="mb-3 text-4xl" aria-hidden="true">✓</div>
-          <p className="mb-6 text-ink-500">{t.onboarding.completeBody}</p>
+          <p className="mb-6 text-ink-500">
+            {status === 'demo' ? t.onboarding.completeBodyDemo : t.onboarding.completeBody}
+          </p>
           <Button onClick={() => void createAndEnter()} disabled={saving} aria-busy={saving}>
-            {saving ? t.onboarding.saving : t.onboarding.createBusiness}
+            {saving ? t.onboarding.saving : status === 'demo' ? t.onboarding.enterDemo : t.onboarding.createBusiness}
           </Button>
         </Card>
       )}

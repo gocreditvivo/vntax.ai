@@ -20,10 +20,10 @@ export const en = {
     loading: 'Loading…',
     retry: 'Try again',
     errorTitle: 'Something went wrong',
-    errorBody: 'We could not load this. Your data is safe.',
+    errorBody: 'We could not load this section. Please try again.',
     of: 'of',
     signIn: 'Sign in',
-    signUp: 'Get started',
+    signUp: 'Account access',
     signOut: 'Sign out',
     language: 'Language',
     english: 'English',
@@ -37,6 +37,18 @@ export const en = {
     blockedTitle: 'We cannot do this yet',
     blockedBody: 'Something needs to be resolved first.',
     emptyGeneric: 'Nothing here yet',
+    productUnavailableTitle: 'Customer accounts are not open in this build',
+    productUnavailableBody:
+      'This build has no verified customer database connection. It will not open a synthetic dashboard or accept a signup. Use only an approved, configured release.',
+    livePilotLabel: 'Controlled pilot',
+    demoLabel: 'Synthetic only',
+    livePilotTitle: 'Only verified capabilities are enabled',
+    livePilotBody:
+      'Your account and business profile use live authentication. Bank connections, transactions, receipts, exports, and professional sharing are not connected to live tenant data yet and are disabled for real accounts. The 2026 DC payroll worksheet runs locally and does not save employee data.',
+    livePilotBanner:
+      'Controlled pilot: live accounts are limited to business setup and the local 2026 DC payroll worksheet. Other workflows are not enabled for customer data.',
+    demoBanner:
+      'Synthetic demo: fictional businesses and records only. Do not enter personal, tax, banking, employee, or customer information.',
   },
 
   errors: {
@@ -60,9 +72,9 @@ export const en = {
   },
 
   legal: {
-    promise: 'We organize your business finances and help you prepare for tax time.',
+    promise: 'Preview planned organization workflows with fictional records.',
     disclosure:
-      'We provide tax organization and bookkeeping software. We do not provide legal, ' +
+      'This controlled preview demonstrates tax-organization and bookkeeping workflows. It does not provide legal, ' +
       'accounting, or professional tax advice. Not an IRS-authorized e-file provider. ' +
       'Tax treatment and eligibility depend on individual facts and applicable law.',
     planningOnly: 'Planning estimate only',
@@ -109,34 +121,34 @@ export const en = {
 
   marketing: {
     trustBadge: 'Bilingual · Vietnamese and English · Built for restaurants and nail salons',
-    heroTitle: 'Smart tax automation for restaurants and nail salons',
+    heroTitle: 'Guided bookkeeping and tax-readiness preview for restaurants and nail salons',
     heroBody:
-      'Track expenses. Organize receipts. Find possible deductions. Stay ready for tax time.',
-    workflowProof: 'Records organized for review',
-    ctaPrimary: 'Start free',
+      'Explore the workflow with fictional records. Live bank connections, receipt reading, transaction storage, and filing are not enabled.',
+    workflowProof: 'Synthetic records organized for review',
+    ctaPrimary: 'Check account availability',
     ctaSecondary: 'See how it works',
     productBoundary:
-      'Software that organizes your books. Not a CPA firm, and not a substitute for one.',
+      'Controlled product preview. Not a CPA firm, not tax advice, and not a substitute for a professional.',
     pickIndustry: 'Which describes your business?',
     restaurantCard: 'Restaurant',
     restaurantCardBody: 'Food cost, delivery fees, payroll, tips, sales tax records',
     salonCard: 'Nail salon',
     salonCardBody: 'Supplies, booth rent, contractors, W-9s, tips',
     howTitle: 'How it works',
-    how1: 'Connect your accounts',
-    how1Body: 'Your bank, cards, and card reader. We never see your login.',
-    how2: 'We sort the transactions',
-    how2Body: 'Every one gets a suggested category. You confirm or change it.',
-    how3: 'Snap receipts',
-    how3Body: 'Take a photo. We read it and match it to the right transaction.',
-    how4: 'Stay ready all year',
-    how4Body: 'See what is missing before March, not during it.',
+    how1: 'Preview account connections',
+    how1Body: 'The synthetic demo shows the planned workflow. Live bank and card connections are not installed.',
+    how2: 'Review suggested categories',
+    how2Body: 'Fictional transactions demonstrate customer confirmation. No customer ledger is stored in the preview.',
+    how3: 'Preview receipt organization',
+    how3Body: 'The demo uses synthetic receipts. It does not upload or read your receipt files.',
+    how4: 'Prepare a review workflow',
+    how4Body: 'See how missing records and review steps can be presented before tax time.',
     bilingualTitle: 'Built in Vietnamese, not translated into it',
     bilingualBody:
-      'Every screen, alert, and explanation works the same in both languages.',
-    securityTitle: 'Your information stays yours',
+      'Core screens support Vietnamese and English. Tax-critical Vietnamese wording still requires qualified native review before customer release.',
+    securityTitle: 'No personal data in the public preview',
     securityBody:
-      'We never sell your data. Nothing is shared with anyone until you say so.',
+      'The synthetic preview does not need bank credentials or customer receipt files. Do not enter real financial or tax information.',
     faqTitle: 'Common questions',
     finalCta: 'Get your books in order',
   },
@@ -150,18 +162,18 @@ export const en = {
     ownerName: 'Your name',
     haveAccount: 'Already have an account?',
     noAccount: 'New here?',
-    mfaNote: 'We will text you a code to keep your account safe.',
+    mfaNote: 'SMS verification is not enabled in this controlled pilot.',
     phoneOptional: 'Optional',
     passwordHint: 'At least 8 characters.',
     signingIn: 'Signing in…',
     creatingAccount: 'Creating your account…',
     forgotPassword: 'Forgot your password?',
-    resetSent: 'If that email has an account, we have sent a reset link. Check your inbox.',
+    resetSent: 'If that email is eligible and delivery is configured, a reset link may arrive. Check your inbox.',
     confirmEmailTitle: 'Confirm your email',
     confirmEmailBody:
-      'We sent a confirmation link to your email. Open it to finish setting up your account.',
+      'Account setup requires an email confirmation link. Check your inbox; delivery must be verified for this pilot.',
     identityUnavailable:
-      'We could not load your account just now. Your data is safe. Please try again.',
+      'We could not load your account just now. Please try again.',
     // Server messages arrive in English. They are mapped to codes and
     // translated here so a Vietnamese-speaking owner never sees English text
     // at the moment something goes wrong.
@@ -184,9 +196,11 @@ export const en = {
     languageTitle: 'Choose your language',
     languageBody: 'You can change this at any time.',
     ownerTitle: 'About you',
+    ownerBody: 'Your signed-in profile supplies your identity. This step does not collect it again.',
     businessTitle: 'About your business',
     businessName: 'Business name',
     dbaName: 'Doing-business-as name',
+    businessPhone: 'Business phone',
     address: 'Street address',
     city: 'City',
     state: 'State',
@@ -197,11 +211,15 @@ export const en = {
     industryTitle: 'What kind of business?',
     entityTitle: 'How is the business set up?',
     entityHelp: 'If you are not sure, choose the closest and we can change it later.',
-    connectionsTitle: 'Connect your accounts',
+    connectionsTitle: 'Account connections',
     connectionsBody:
-      'We only read your transactions. We never see your login and we never move money.',
+      'This step shows the planned connection categories. Live bank, card, and processor connections are not installed.',
+    connectionsUnavailable:
+      'Connections are unavailable in the controlled pilot. Do not enter banking or account credentials.',
     completeTitle: 'You are set up',
-    completeBody: 'We are sorting your transactions now. This takes a few minutes.',
+    completeBody: 'Your business profile is ready. Transaction importing and sorting are not enabled in this controlled pilot.',
+    completeBodyDemo: 'The synthetic walkthrough is complete. No account, business, or transaction record was created.',
+    enterDemo: 'Enter synthetic preview',
     saving: 'Saving…',
     createBusiness: 'Create my business',
     businessNameRequired: 'Please enter your business name.',
@@ -362,7 +380,7 @@ export const en = {
     revoke: 'Revoke access',
     activeAccess: 'Active access',
     accessHistory: 'Access history',
-    neverShared: 'Nothing is shared until you share it.',
+    neverShared: 'Synthetic demo only. No real sharing occurs on this screen.',
     ownerOnly: 'Only the owner can grant or revoke access.',
     emptyTitle: 'No one has access',
     emptyBody: 'Invite your tax professional when you are ready.',
@@ -437,7 +455,7 @@ export const en = {
     connect: 'Connect',
     reconnect: 'Reconnect',
     lastSync: 'Last updated',
-    neverCredentials: 'We never see or store your login.',
+    neverCredentials: 'Synthetic preview only. No account credentials are requested or accepted here.',
     not_connected: 'Not connected',
     connecting: 'Connecting…',
     connected: 'Connected',

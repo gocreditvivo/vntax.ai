@@ -93,3 +93,25 @@ export const envState: EnvState = validate(
 );
 
 export const isSupabaseConfigured = envState.configured;
+
+export type RuntimeMode = 'live_limited' | 'synthetic_demo' | 'locked';
+
+/** Pure and testable: production must never infer demo access from missing credentials. */
+export function resolveRuntimeMode(configured: boolean, demoEnabled: boolean): RuntimeMode {
+  if (configured) return 'live_limited';
+  return demoEnabled ? 'synthetic_demo' : 'locked';
+}
+
+/**
+ * Synthetic fixtures require an explicit build-time opt-in. Tests opt in
+ * automatically, but an ordinary production build with missing credentials is
+ * locked. This prevents a Vercel env mistake from publishing a fake customer
+ * dashboard as though it were a live account.
+ */
+export const syntheticDemoEnabled =
+  readRaw('VITE_ENABLE_SYNTHETIC_DEMO') === 'true' || readRaw('MODE') === 'test';
+
+export const runtimeMode: RuntimeMode = resolveRuntimeMode(
+  envState.configured,
+  syntheticDemoEnabled,
+);

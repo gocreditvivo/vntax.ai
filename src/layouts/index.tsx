@@ -3,6 +3,7 @@ import { useI18n } from '../i18n';
 import { Link, useNav } from '../app/router';
 import { useAuth } from '../auth/AuthProvider';
 import type { Industry, Locale } from '../types';
+import type { RuntimeMode } from '../lib/env';
 
 /**
  * Sign-out control.
@@ -126,7 +127,14 @@ export function OnboardingLayout({
   );
 }
 
-const NAV_ITEMS = (industry: Industry) => [
+const NAV_ITEMS = (industry: Industry, mode: Exclude<RuntimeMode, 'locked'>) => {
+  if (mode === 'live_limited') {
+    return [
+      { to: '/app/dashboard', key: 'dashboard' as const },
+      ...(industry === 'restaurant' ? [{ to: '/app/payroll', key: 'payroll' as const }] : []),
+    ];
+  }
+  return [
   { to: '/app/dashboard', key: 'dashboard' as const },
   { to: '/app/transactions', key: 'transactions' as const },
   { to: '/app/receipts', key: 'receipts' as const },
@@ -140,14 +148,15 @@ const NAV_ITEMS = (industry: Industry) => [
   { to: '/app/documents', key: 'documents' as const },
   { to: '/app/exports', key: 'exports' as const },
   { to: '/app/collaboration/sharing', key: 'sharing' as const },
-];
+  ];
+};
 
 export function AppLayout({
-  industry, businessName, children,
-}: { industry: Industry; businessName: string; children: ReactNode }) {
+  industry, businessName, mode, children,
+}: { industry: Industry; businessName: string; mode: Exclude<RuntimeMode, 'locked'>; children: ReactNode }) {
   const { t } = useI18n();
   const { path } = useNav();
-  const items = NAV_ITEMS(industry);
+  const items = NAV_ITEMS(industry, mode);
 
   return (
     <div className="min-h-screen bg-cream">
@@ -165,6 +174,12 @@ export function AppLayout({
           </div>
         </div>
       </header>
+
+      <div className={mode === 'synthetic_demo' ? 'border-b border-blue-200 bg-blue-50' : 'border-b border-amber-200 bg-amber-50'}>
+        <p className="mx-auto max-w-7xl px-5 py-2 text-sm text-content-secondary">
+          {mode === 'synthetic_demo' ? t.states.demoBanner : t.states.livePilotBanner}
+        </p>
+      </div>
 
       <div className="mx-auto flex max-w-7xl gap-6 px-4 py-6">
         {/* Desktop sidebar */}

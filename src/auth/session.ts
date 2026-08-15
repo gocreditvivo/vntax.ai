@@ -108,7 +108,6 @@ export interface SignUpInput {
   email: string;
   password: string;
   displayName: string;
-  phone?: string;
   locale: Locale;
 }
 
@@ -144,7 +143,6 @@ export async function signUp(input: SignUpInput): Promise<AuthResult<SignUpOutco
         data: {
           display_name: displayName,
           locale: input.locale,
-          ...(input.phone?.trim() ? { phone: input.phone.trim() } : {}),
         },
       },
     });

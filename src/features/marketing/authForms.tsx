@@ -43,7 +43,6 @@ export function SignUp() {
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
 
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -73,7 +72,7 @@ export function SignUp() {
 
     setBusy(true);
     const result = await signUp({
-      email, password, displayName: name, phone, locale,
+      email, password, displayName: name, locale,
     });
     setBusy(false);
 
@@ -155,19 +154,6 @@ export function SignUp() {
               onChange={(e) => { setEmail(e.target.value); setFieldErrors((p) => ({ ...p, email: '' })); }}
               aria-invalid={!!fieldErrors.email}
               aria-describedby={fieldErrors.email ? 'email-error' : undefined}
-              disabled={busy}
-            />
-          </Field>
-
-          <Field id="phone" label={t.auth.phone} hint={t.auth.mfaNote}>
-            <Input
-              id="phone"
-              name="phone"
-              type="tel"
-              inputMode="tel"
-              autoComplete="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
               disabled={busy}
             />
           </Field>

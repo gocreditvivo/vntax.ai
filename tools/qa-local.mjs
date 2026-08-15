@@ -113,14 +113,88 @@ async function inspectPayrollVietnamese() {
   return result;
 }
 
+async function inspectSyntheticBoundaries() {
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  await page.addInitScript(() => window.localStorage.setItem('vntax.locale', 'en'));
+  page.on('console', (message) => {
+    if (message.type() === 'error') errors.push(`synthetic-boundaries: console: ${message.text()}`);
+  });
+  page.on('pageerror', (error) => errors.push(`synthetic-boundaries: pageerror: ${error.message}`));
+
+  await page.goto(`${baseUrl}#/auth/sign-up`, { waitUntil: 'networkidle', timeout: 30_000 });
+  const authBody = await page.locator('body').innerText();
+  const authFieldsAbsent = await page.locator('input').count() === 0;
+  await page.screenshot({ path: path.join(outputDir, 'synthetic-auth-locked.png'), fullPage: true });
+
+  await page.goto(`${baseUrl}#/guide`, { waitUntil: 'networkidle', timeout: 30_000 });
+  await page.getByText(/Synthetic demo: fictional businesses/).waitFor();
+  await page.getByText(/First, what kind of work do you do/).waitFor();
+  const guideBody = await page.locator('body').innerText();
+  await page.screenshot({ path: path.join(outputDir, 'synthetic-guide.png'), fullPage: true });
+
+  await page.goto(`${baseUrl}#/onboarding/connections`, { waitUntil: 'networkidle', timeout: 30_000 });
+  const onboardingBody = await page.locator('body').innerText();
+  const connectButtons = await page.getByRole('button', { name: 'Connect', exact: true }).count();
+  await page.screenshot({ path: path.join(outputDir, 'synthetic-onboarding-connections.png'), fullPage: true });
+
+  const result = {
+    name: 'synthetic-boundaries',
+    authFailsClosed: authBody.includes('Customer accounts are not open in this build'),
+    authFieldsAbsent,
+    guideHasPersistentWarning: guideBody.includes('Synthetic demo: fictional businesses'),
+    guideAvoidsInstalledCapabilityClaims:
+      !guideBody.includes("I'll read it for you") &&
+      !guideBody.includes('Your next date is September 15') &&
+      !guideBody.includes('a real person on our team reviews it'),
+    onboardingHasPersistentWarning: onboardingBody.includes('Synthetic demo: fictional businesses'),
+    onboardingLabelsSyntheticOnly: onboardingBody.includes('Synthetic only'),
+    onboardingHasNoConnectButtons: connectButtons === 0,
+    horizontalOverflow: await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth),
+  };
+  await page.close();
+  return result;
+}
+
 const results = [
   await inspect('home-desktop', { width: 1440, height: 1000 }),
   await inspect('home-mobile', { width: 390, height: 844 }),
   await inspectPayroll('payroll-desktop', { width: 1440, height: 1000 }),
   await inspectPayroll('payroll-mobile', { width: 390, height: 844 }),
   await inspectPayrollVietnamese(),
+  await inspectSyntheticBoundaries(),
 ];
 
 await browser.close();
-console.log(JSON.stringify({ results, errors }, null, 2));
-if (errors.length > 0) process.exitCode = 1;
+
+const failures = [];
+for (const result of results) {
+  if (result.status !== undefined && result.status !== 200) failures.push(`${result.name}: HTTP ${result.status}`);
+  if (result.horizontalOverflow) failures.push(`${result.name}: horizontal overflow`);
+}
+
+for (const result of results.filter((entry) => entry.name.startsWith('payroll-') && entry.name !== 'payroll-vietnamese')) {
+  for (const key of [
+    'hasReview', 'hasEmployerRateInput', 'blocksTransitionWeek', 'hasSelectedEmployerRate',
+    'hasDeductionRemittance', 'csvRecordsRateAndRemittance',
+  ]) {
+    if (!result[key]) failures.push(`${result.name}: ${key} failed`);
+  }
+  if (result.hasStaleWageBase) failures.push(`${result.name}: stale Social Security wage base shown`);
+}
+
+const viResult = results.find((entry) => entry.name === 'payroll-vietnamese');
+for (const key of ['hasVietnameseTitle', 'hasEmployerRateGuidance', 'hasTranslatedTransitionBlock']) {
+  if (!viResult?.[key]) failures.push(`payroll-vietnamese: ${key} failed`);
+}
+
+const boundaryResult = results.find((entry) => entry.name === 'synthetic-boundaries');
+for (const key of [
+  'authFailsClosed', 'authFieldsAbsent', 'guideHasPersistentWarning',
+  'guideAvoidsInstalledCapabilityClaims', 'onboardingHasPersistentWarning',
+  'onboardingLabelsSyntheticOnly', 'onboardingHasNoConnectButtons',
+]) {
+  if (!boundaryResult?.[key]) failures.push(`synthetic-boundaries: ${key} failed`);
+}
+
+console.log(JSON.stringify({ results, errors, failures }, null, 2));
+if (errors.length > 0 || failures.length > 0) process.exitCode = 1;

@@ -1,10 +1,11 @@
 # Sổ Sạch — Phase 2 Functional Prototype
 
-Bilingual tax automation and business-finance organization software for
-Vietnamese restaurant and nail salon owners.
+Bilingual controlled-product preview for Vietnamese restaurant and nail salon
+owners, plus a local 2026 Washington, DC payroll worksheet.
 
-> **We organize your business finances and help you prepare for tax time.**
-> We do not provide legal, accounting, or professional tax advice.
+> **This build demonstrates planned organization workflows with fictional
+> records.** It does not connect financial accounts, store a customer ledger,
+> read receipt files, file returns, or provide legal, accounting, or tax advice.
 
 Built against the accepted Phase 1 architecture, types, and permission matrix.
 
@@ -21,6 +22,20 @@ npm run build
 ```
 
 Requires Node 20+. `npm install` needs network access.
+
+### Runtime modes
+
+VNTax does not infer a demo from missing production credentials.
+
+| Mode | How selected | Customer-data behavior |
+|---|---|---|
+| Locked | Default build without verified Supabase variables | Signup and app routes fail closed; no fixture dashboard is exposed |
+| Live limited | Valid `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` | Live authentication and business setup; only the local 2026 DC payroll worksheet is enabled after sign-in |
+| Synthetic demo | Explicit `VITE_ENABLE_SYNTHETIC_DEMO=true` build | Fictional fixtures only, with a persistent warning not to enter personal, tax, banking, employee, or customer data |
+
+Transactions, receipts, banking, OCR, exports, and professional sharing are not
+wired to live tenant data. A configured account never falls through to those
+fixture-backed screens.
 
 ### Reviewing without installing
 
@@ -66,7 +81,7 @@ Every app screen implements four states: **loading**, **empty**, **error**,
 
 ```
 npm run test
-  13 suites, 74 tests, 0 failed
+  4 files, 194 tests, 0 failed
 ```
 
 | Group | Covers |
@@ -110,8 +125,10 @@ trace verbatim, with `[unverified]` tags visible to the customer.
 
 ## Known limitations
 
-1. **No live data.** All adapters are mocked. Banking, OCR, storage, payroll,
-   and notification services are fixtures only.
+1. **Only identity and the business record are live-capable.** Banking, OCR,
+   transactions, receipts, documents, exports, professional sharing, and
+   notifications still use fixtures and are disabled for real accounts. The
+   DC payroll worksheet runs locally and does not persist employee data.
 2. **Tax engine not expanded**, per instruction. The quarterly screen renders
    a fixture shaped exactly like engine output. Wiring is a Phase 3 task.
 3. **Vietnamese copy needs native review.** Drafted here in the familiar
@@ -126,7 +143,7 @@ trace verbatim, with `[unverified]` tags visible to the customer.
 5. **`preview.css` is a hand-generated Tailwind subset** used only for offline
    rendering. Production uses real Tailwind via `tailwind.config.js`. If you
    add utilities, regenerate with `node tools/gen-css.cjs` or just run Vite.
-6. **Not yet built:** alerts screen, messages, settings, security, billing,
+6. **Not yet built:** live ledger/storage adapters, alerts, messages, settings, security, billing,
    admin shell, contractor/W-9 tracker, tip tracker, sales-tax tracker,
    bulk-categorization detail view, transaction detail, receipt detail.
    Routes and types exist; screens are Phase 3.

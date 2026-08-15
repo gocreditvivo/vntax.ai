@@ -21,7 +21,7 @@ import {
 import type { ReactNode } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { getSupabase } from '../lib/supabase';
-import { envState } from '../lib/env';
+import { envState, runtimeMode } from '../lib/env';
 import type { Membership, Role } from '../types';
 import {
   loadIdentity, signIn as doSignIn, signOut as doSignOut, signUp as doSignUp,
@@ -29,8 +29,10 @@ import {
 } from './session';
 
 export type AuthStatus =
-  /** Project not configured — tests, preview builds, fresh clones. */
+  /** Project not configured and synthetic fixtures were not explicitly enabled. */
   | 'unconfigured'
+  /** Explicit synthetic build. Never inferred from missing production credentials. */
+  | 'demo'
   /** Restoring a persisted session. Render neither app nor login. */
   | 'loading'
   | 'signed_out'
@@ -80,7 +82,9 @@ function writeStoredBusinessId(id: string | null): void {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const configured = envState.configured;
 
-  const [status, setStatus] = useState<AuthStatus>(configured ? 'loading' : 'unconfigured');
+  const [status, setStatus] = useState<AuthStatus>(
+    configured ? 'loading' : runtimeMode === 'synthetic_demo' ? 'demo' : 'unconfigured',
+  );
   const [session, setSession] = useState<Session | null>(null);
   const [identity, setIdentity] = useState<Identity | null>(null);
   const [activeBusinessId, setActive] = useState<string | null>(null);
