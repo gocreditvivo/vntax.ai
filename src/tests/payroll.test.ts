@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { calculateWorker, dcRulesFor, totalPayroll, type PayrollWorkerInput } from '../features/payroll/engine';
+import { csvCell } from '../features/payroll/csv';
 
 const worker = (patch: Partial<PayrollWorkerInput> = {}): PayrollWorkerInput => ({
   id: 'w1', name: 'Synthetic Worker', kind: 'w2_hourly', rateOrPay: 20,
@@ -11,6 +12,14 @@ const worker = (patch: Partial<PayrollWorkerInput> = {}): PayrollWorkerInput => 
 });
 
 describe('2026 Washington, DC payroll engine', () => {
+  it('neutralizes spreadsheet formulas in user-controlled CSV text', () => {
+    expect(csvCell('=HYPERLINK("https://example.test")')).toBe(`"'=HYPERLINK(""https://example.test"")"`);
+    expect(csvCell('  +SUM(A1:A2)')).toBe("'  +SUM(A1:A2)");
+    expect(csvCell('@malicious')).toBe("'@malicious");
+    expect(csvCell(-42)).toBe('-42');
+    expect(csvCell('ordinary worker')).toBe('ordinary worker');
+  });
+
   it('uses the two official 2026 DC minimum-wage periods', () => {
     expect(dcRulesFor('2026-06-30').minimumWage).toBe(17.95);
     expect(dcRulesFor('2026-06-30').tippedCashWage).toBe(10);

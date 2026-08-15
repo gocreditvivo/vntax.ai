@@ -10,7 +10,7 @@
  */
 
 import type { Session, User as SupabaseUser } from '@supabase/supabase-js';
-import { getSupabase } from '../lib/supabase';
+import { clearPersistedAuthState, getSupabase } from '../lib/supabase';
 import type { Locale, Membership, Role } from '../types';
 import {
   failure, isValidEmail, isValidPassword, mapAuthError,
@@ -68,6 +68,9 @@ export async function loadIdentity(user: SupabaseUser): Promise<AuthResult<Ident
     supabase
       .from('memberships')
       .select('user_id, business_id, role, invited_by_user_id, accepted_at, grant_id')
+      // RLS is the boundary, but this filter prevents an over-broad future
+      // SELECT policy from being amplified into a cross-user business switcher.
+      .eq('user_id', user.id)
       .not('accepted_at', 'is', null)
       .order('created_at', { ascending: true }),
   ]);
@@ -78,6 +81,8 @@ export async function loadIdentity(user: SupabaseUser): Promise<AuthResult<Ident
   const profile = profileRes.data;
 
   const memberships: Membership[] = (membershipRes.data ?? []).flatMap((row) => {
+    // Defence in depth against a policy regression or malformed response.
+    if (row.user_id !== user.id) return [];
     const role = toRole(row.role);
     if (!role) return [];
     return [{
@@ -190,7 +195,10 @@ export async function signIn(emailRaw: string, password: string): Promise<AuthRe
  */
 export async function signOut(): Promise<AuthResult<null>> {
   const supabase = getSupabase();
-  if (!supabase) return ok(null);
+  if (!supabase) {
+    clearPersistedAuthState();
+    return ok(null);
+  }
 
   try {
     const { error } = await supabase.auth.signOut({ scope: 'local' });
@@ -198,6 +206,10 @@ export async function signOut(): Promise<AuthResult<null>> {
     return ok(null);
   } catch (e) {
     return fail(mapAuthError(e as Error));
+  } finally {
+    // Supabase does not remove its local session when the server call fails.
+    // Shared-device sign-out must remain local-first and fail closed.
+    clearPersistedAuthState();
   }
 }
 
@@ -220,6 +232,32 @@ export async function sendPasswordReset(emailRaw: string): Promise<AuthResult<nu
       // HashRouter means the recovery route lives after the hash.
       redirectTo: `${window.location.origin}/#/auth/reset`,
     });
+    if (error) return fail(mapAuthError(error));
+    return ok(null);
+  } catch (e) {
+    return fail(mapAuthError(e as Error));
+  }
+}
+
+/**
+ * Completes a password-recovery flow after Supabase has exchanged the recovery
+ * code for a short-lived authenticated session.
+ *
+ * The caller validates confirmation equality. This function repeats the
+ * password-strength check because UI validation is never a service boundary.
+ */
+export async function updatePassword(password: string): Promise<AuthResult<null>> {
+  const supabase = getSupabase();
+  if (!supabase) return fail(failure('not_configured'));
+  if (!isValidPassword(password)) return fail(failure('weak_password'));
+
+  try {
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError || !sessionData.session) {
+      return fail(failure('invalid_recovery_link', sessionError?.message));
+    }
+
+    const { error } = await supabase.auth.updateUser({ password });
     if (error) return fail(mapAuthError(error));
     return ok(null);
   } catch (e) {

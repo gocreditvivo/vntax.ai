@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 
 import {
   MUTATION_ACK,
@@ -229,4 +230,19 @@ test('schema mismatch stops before any disposable row is created', async () => {
   assert.match(report.fatalError, /No mutation was performed/);
   assert.equal(mutationCalls, 0);
   assert.equal(report.cleanup.length, 0);
+});
+
+test('shared-business helper requires accepted membership on both sides', () => {
+  const sql = readFileSync(
+    new URL(
+      '../supabase/migrations/20260815000100_vntax_require_accepted_shared_memberships.sql',
+      import.meta.url,
+    ),
+    'utf8',
+  );
+
+  assert.match(sql, /a\.accepted_at\s+is\s+not\s+null/i);
+  assert.match(sql, /b\.accepted_at\s+is\s+not\s+null/i);
+  assert.match(sql, /set\s+search_path\s*=\s*''/i);
+  assert.match(sql, /revoke\s+all[\s\S]+from\s+public,\s*anon/i);
 });

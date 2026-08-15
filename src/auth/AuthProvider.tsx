@@ -87,14 +87,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
   const [session, setSession] = useState<Session | null>(null);
   const [identity, setIdentity] = useState<Identity | null>(null);
+  const identityRef = useRef<Identity | null>(null);
   const [activeBusinessId, setActive] = useState<string | null>(null);
 
   /** Guards against setState after unmount, and against stale async writes. */
   const mounted = useRef(true);
-  useEffect(() => () => { mounted.current = false; }, []);
+  const authGeneration = useRef(0);
+  useEffect(() => {
+    // React Strict Mode intentionally runs setup -> cleanup -> setup in
+    // development. Resetting true in setup keeps the second pass live while
+    // the cleanup still prevents writes after a real unmount.
+    mounted.current = true;
+    return () => { mounted.current = false; };
+  }, []);
 
   const applyIdentity = useCallback((next: Identity | null) => {
     if (!mounted.current) return;
+    // Keep imperative business selection synchronized even before React has
+    // committed the state update (for example, immediately after onboarding
+    // refreshes the newly created owner membership).
+    identityRef.current = next;
     setIdentity(next);
 
     if (!next) {
@@ -116,6 +128,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const hydrate = useCallback(async (next: Session | null) => {
+    // Every state-changing auth event supersedes prior identity work. Without
+    // this generation check, a slow profile query for user A can finish after
+    // SIGNED_OUT or a user-B sign-in and restore A's identity into the UI.
+    const generation = ++authGeneration.current;
+
     if (!next?.user) {
       if (mounted.current) {
         setSession(null);
@@ -127,7 +144,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (mounted.current) setSession(next);
     const result = await loadIdentity(next.user);
-    if (!mounted.current) return;
+    if (!mounted.current || generation !== authGeneration.current) return;
 
     // A failed identity load is not a failed sign-in. The session is valid; the
     // profile read failed, most likely transiently. Staying signed in with a
@@ -170,11 +187,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [configured, hydrate]);
 
   const setActiveBusinessId = useCallback((id: string) => {
+    if (!identityRef.current?.memberships.some((membership) => membership.businessId === id)) return;
     setActive(id);
     writeStoredBusinessId(id);
   }, []);
 
   const signOut = useCallback(async () => {
+    // Invalidate in-flight profile or membership reads before awaiting the
+    // network-facing sign-out call.
+    authGeneration.current += 1;
     await doSignOut();
     // Cleared eagerly rather than waiting for the SIGNED_OUT event, so the UI
     // never shows tax data for one frame after the user asked to leave.
@@ -189,8 +210,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshIdentity = useCallback(async () => {
     const current = session;
     if (!current?.user) return;
+    const generation = authGeneration.current;
     const result = await loadIdentity(current.user);
-    if (result.ok) applyIdentity(result.data);
+    if (result.ok && generation === authGeneration.current) applyIdentity(result.data);
   }, [session, applyIdentity]);
 
   const value = useMemo<AuthValue>(() => {

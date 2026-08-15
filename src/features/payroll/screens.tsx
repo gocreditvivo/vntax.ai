@@ -5,6 +5,7 @@ import {
   calculateWorker, dcRulesFor, totalPayroll,
   type PayrollWorkerInput, type WorkerKind,
 } from './engine';
+import { csvCell } from './csv';
 
 type Step = 1 | 2 | 3;
 
@@ -96,11 +97,6 @@ function localMessage(message: string, vi: boolean): string {
 
 function NumberField({ label, value, set }: { label: string; value: number; set: (n: number) => void }) {
   return <label className="block text-sm text-content-secondary"><span className="mb-1 block">{label}</span><Input type="number" min="0" step="0.01" value={value} onChange={(e) => set(Number(e.target.value) || 0)} /></label>;
-}
-
-function csvCell(value: unknown) {
-  const text = String(value ?? '');
-  return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
 }
 
 export function Payroll() {

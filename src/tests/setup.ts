@@ -50,6 +50,13 @@ function ensureBrowserStorage(name: 'localStorage' | 'sessionStorage') {
 ensureBrowserStorage('localStorage');
 ensureBrowserStorage('sessionStorage');
 
+// jsdom exposes scrollTo but implements it as a noisy "not implemented"
+// error. Navigation tests need only assert routing, not viewport movement.
+Object.defineProperty(window, 'scrollTo', {
+  configurable: true,
+  value: () => {},
+});
+
 /**
  * Unmounts anything rendered by a test once it finishes.
  *

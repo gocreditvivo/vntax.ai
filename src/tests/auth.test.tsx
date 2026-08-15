@@ -14,6 +14,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { StrictMode } from 'react';
 import type { AuthError } from '@supabase/supabase-js';
 
 import type * as EnvModule from '../lib/env';
@@ -314,6 +315,13 @@ interface FakeOptions {
   profile?: Record<string, unknown> | null;
   memberships?: Record<string, unknown>[];
   business?: Record<string, unknown> | null;
+  /** Delays profile hydration so auth-event ordering can be exercised. */
+  identityDelayMs?: number;
+  profileError?: AuthError | null;
+  updatedPassword?: string;
+  updatePasswordError?: AuthError | null;
+  signOutError?: AuthError | null;
+  authCallback?: (event: string, session: Record<string, unknown> | null) => void;
 }
 
 let fake: FakeOptions;
@@ -343,7 +351,15 @@ vi.mock('../lib/supabase', async () => {
       eq: chain,
       not: chain,
       order: () => Promise.resolve({ data: fake.memberships ?? [], error: null }),
-      maybeSingle: () => Promise.resolve({ data: rows, error: null }),
+      maybeSingle: async () => {
+        if (name === 'profiles' && fake.identityDelayMs) {
+          await new Promise((resolve) => setTimeout(resolve, fake.identityDelayMs));
+        }
+        return {
+          data: rows,
+          error: name === 'profiles' ? (fake.profileError ?? null) : null,
+        };
+      },
       single: () => Promise.resolve({ data: rows, error: null }),
       insert: chain,
       then: undefined,
@@ -359,14 +375,24 @@ vi.mock('../lib/supabase', async () => {
           if (fake.sessionDelayMs) await new Promise((r) => setTimeout(r, fake.sessionDelayMs));
           return { data: { session: fake.session }, error: null };
         },
-        onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
+        onAuthStateChange: (callback: FakeOptions['authCallback']) => {
+          fake.authCallback = callback;
+          return { data: { subscription: { unsubscribe: () => {} } } };
+        },
         signInWithPassword: async () =>
           fake.signInResult?.error
             ? { data: { session: null }, error: fake.signInResult.error }
             : { data: { session: fake.session }, error: null },
         signUp: async () => ({ data: { session: fake.session, user: null }, error: null }),
-        signOut: async () => ({ error: null }),
+        signOut: async () => ({ error: fake.signOutError ?? null }),
         resetPasswordForEmail: async () => ({ error: null }),
+        updateUser: async ({ password }: { password: string }) => {
+          fake.updatedPassword = password;
+          return {
+            data: { user: fake.session ? (fake.session.user ?? null) : null },
+            error: fake.updatePasswordError ?? null,
+          };
+        },
       },
       from: table,
     }),
@@ -422,6 +448,62 @@ describe('auth guard', () => {
     // never be shown a login form for a frame.
     expect(screen.queryByRole('heading', { name: en.auth.loginTitle })).not.toBeInTheDocument();
     expect(screen.getByText(en.common.loading)).toBeInTheDocument();
+  });
+
+  it('restores authentication under React Strict Mode lifecycle replay', async () => {
+    fake = { session: SESSION, profile: PROFILE, memberships: [] };
+
+    const App = await importApp();
+    render(
+      <StrictMode>
+        <App initialPath="/onboarding/business" initialLocale="en" />
+      </StrictMode>,
+    );
+
+    expect(await screen.findByRole('heading', { name: en.onboarding.businessTitle })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: en.auth.loginTitle })).not.toBeInTheDocument();
+  });
+
+  it('does not let a stale identity lookup restore a session after sign-out', async () => {
+    fake = {
+      session: SESSION,
+      profile: PROFILE,
+      memberships: [],
+      identityDelayMs: 60,
+    };
+
+    const App = await importApp();
+    render(<App initialPath="/app/dashboard" initialLocale="en" />);
+
+    await waitFor(() => expect(fake.authCallback).toBeTypeOf('function'));
+    fake.authCallback?.('SIGNED_OUT', null);
+
+    expect(await screen.findByRole('heading', { name: en.auth.loginTitle })).toBeInTheDocument();
+    await new Promise((resolve) => setTimeout(resolve, 90));
+    expect(screen.getByRole('heading', { name: en.auth.loginTitle })).toBeInTheDocument();
+    expect(screen.queryByText(en.onboarding.businessTitle)).not.toBeInTheDocument();
+  });
+
+  it('retries the failed identity request instead of only retrying the business row', async () => {
+    fake = {
+      session: SESSION,
+      profile: PROFILE,
+      memberships: [],
+      profileError: {
+        name: 'PostgrestError',
+        message: 'temporary profile failure',
+      } as AuthError,
+    };
+
+    const user = userEvent.setup();
+    const App = await importApp();
+    render(<App initialPath="/app/dashboard" initialLocale="en" />);
+
+    expect(await screen.findByText(en.auth.identityUnavailable)).toBeInTheDocument();
+    fake.profileError = null;
+    await user.click(screen.getByRole('button', { name: en.common.retry }));
+
+    expect(await screen.findByRole('heading', { name: en.onboarding.businessTitle })).toBeInTheDocument();
   });
 
   it('renders the login form in Vietnamese when the locale is Vietnamese', async () => {
@@ -569,5 +651,75 @@ describe('login form', () => {
     await user.click(screen.getByRole('button', { name: en.common.continue }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(en.auth.errors.weak_password);
+  });
+});
+
+describe('password recovery', () => {
+  beforeEach(() => {
+    fake = { session: SESSION, profile: PROFILE, memberships: [] };
+    window.localStorage.clear();
+    window.sessionStorage.clear();
+    vi.resetModules();
+  });
+
+  it('completes the recovery route and clears the recovery session', async () => {
+    const user = userEvent.setup();
+    const App = await importApp();
+    render(<App initialPath="/auth/reset" initialLocale="en" />);
+
+    expect(await screen.findByRole('heading', { name: en.auth.resetTitle })).toBeInTheDocument();
+    await user.type(screen.getByLabelText(en.auth.newPassword), 'new-secure-password');
+    await user.type(screen.getByLabelText(en.auth.confirmPassword), 'new-secure-password');
+    await user.click(screen.getByRole('button', { name: en.auth.resetAction }));
+
+    expect(await screen.findByRole('heading', { name: en.auth.resetCompleteTitle })).toBeInTheDocument();
+    expect(fake.updatedPassword).toBe('new-secure-password');
+  });
+
+  it('removes the persisted browser session even when Supabase sign-out fails', async () => {
+    fake.signOutError = {
+      name: 'AuthRetryableFetchError',
+      message: 'Failed to fetch',
+      status: 0,
+    } as AuthError;
+    window.localStorage.setItem('vntax.auth.session', 'sensitive-session');
+    window.localStorage.setItem('vntax.auth.session-code-verifier', 'recovery-verifier');
+
+    const user = userEvent.setup();
+    const App = await importApp();
+    render(<App initialPath="/auth/reset" initialLocale="en" />);
+
+    await screen.findByRole('heading', { name: en.auth.resetTitle });
+    await user.type(screen.getByLabelText(en.auth.newPassword), 'new-secure-password');
+    await user.type(screen.getByLabelText(en.auth.confirmPassword), 'new-secure-password');
+    await user.click(screen.getByRole('button', { name: en.auth.resetAction }));
+
+    expect(await screen.findByRole('heading', { name: en.auth.resetCompleteTitle })).toBeInTheDocument();
+    expect(window.localStorage.getItem('vntax.auth.session')).toBeNull();
+    expect(window.localStorage.getItem('vntax.auth.session-code-verifier')).toBeNull();
+  });
+
+  it('fails closed when the recovery session is absent', async () => {
+    fake.session = null;
+    const App = await importApp();
+    render(<App initialPath="/auth/reset" initialLocale="en" />);
+
+    expect(await screen.findByRole('heading', { name: en.auth.resetInvalidTitle })).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent(en.auth.errors.invalid_recovery_link);
+    expect(screen.queryByLabelText(en.auth.newPassword)).not.toBeInTheDocument();
+  });
+
+  it('does not contact Supabase when password confirmation differs', async () => {
+    const user = userEvent.setup();
+    const App = await importApp();
+    render(<App initialPath="/auth/reset" initialLocale="en" />);
+
+    await screen.findByRole('heading', { name: en.auth.resetTitle });
+    await user.type(screen.getByLabelText(en.auth.newPassword), 'new-secure-password');
+    await user.type(screen.getByLabelText(en.auth.confirmPassword), 'different-password');
+    await user.click(screen.getByRole('button', { name: en.auth.resetAction }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(en.auth.errors.password_mismatch);
+    expect(fake.updatedPassword).toBeUndefined();
   });
 });

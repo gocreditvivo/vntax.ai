@@ -97,6 +97,13 @@ dependent policies followed automatically rather than being hand-rewritten —
 which matters, because rewriting 52 security policies by hand is precisely how
 isolation bugs get introduced.
 
+A later manual security review found that `shares_business_with()` did not
+require either joined membership to have `accepted_at` set. The forward-only
+`20260815000100_vntax_require_accepted_shared_memberships.sql` migration now
+requires accepted membership on both sides. This correction is structurally
+verified in the repository but still requires the dedicated-project, two-user
+live RLS run described below.
+
 ## Historical verification and current verifier
 
 The prior handoff records a 38/38 run against the historical database. That is

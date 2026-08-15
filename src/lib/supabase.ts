@@ -21,6 +21,24 @@ export type TypedSupabase = SupabaseClient<Database>;
 /** Storage key is namespaced so VNTax cannot collide with a sibling app on the same origin. */
 const STORAGE_KEY = 'vntax.auth.session';
 
+/**
+ * Removes only VNTax auth material from this browser.
+ *
+ * Supabase's local sign-out still calls the auth server first. On a network
+ * error it returns before removing storage, so a shared computer can restore
+ * the old session on reload unless the application also clears its namespaced
+ * keys locally.
+ */
+export function clearPersistedAuthState(): void {
+  try {
+    window.localStorage.removeItem(STORAGE_KEY);
+    window.localStorage.removeItem(`${STORAGE_KEY}-code-verifier`);
+  } catch {
+    // Storage can be unavailable in hardened/private browser contexts. The
+    // in-memory UI state is still cleared by AuthProvider.
+  }
+}
+
 let client: TypedSupabase | null = null;
 
 function create(): TypedSupabase | null {

@@ -232,10 +232,10 @@ export function Onboarding({
       return;
     }
 
-    // Select the new business before refreshing, so the shell has a target the
-    // moment the membership appears.
-    setActiveBusinessId(result.data.id);
+    // Refresh first so selection can prove the returned business is present in
+    // the caller's accepted memberships. The setter refuses arbitrary ids.
     await refreshIdentity();
+    setActiveBusinessId(result.data.id);
     clearDraft();
     setSaving(false);
     navigate('/app/dashboard');

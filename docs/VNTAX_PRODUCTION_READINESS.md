@@ -72,7 +72,7 @@ production candidate. A demo bundle is never the production artifact.
 
 ## Current verification evidence
 
-- Default production build: 196/196 application tests, 9/9 RLS-verifier and schema-contract safety
+- Default production build: 204/204 application tests, 10/10 RLS-verifier and schema-contract safety
   tests, TypeScript, zero-warning lint, production bundle, and dependency audit
   pass locally.
 - Locked-runtime Chrome check: homepage states the account boundary; signup and
@@ -96,6 +96,15 @@ production candidate. A demo bundle is never the production artifact.
   `quarterly_estimates`, and `tax_identities` each returned zero rows through
   the publishable browser key. This proves only anonymous non-enumeration; it
   does not replace an authenticated two-user isolation test.
+
+- Manual threat review remediation: password recovery now completes at its
+  routed destination; stale auth hydration cannot overwrite a newer auth
+  event; sign-out removes namespaced browser auth state even on network
+  failure; identity retry re-reads identity; active business selection and
+  membership hydration fail closed; payroll CSV text neutralizes spreadsheet
+  formulas; and `shares_business_with()` now requires accepted memberships on
+  both sides. The SQL correction remains structural-only until applied and
+  exercised in the dedicated project.
 
 ## Gates before complete-platform production
 

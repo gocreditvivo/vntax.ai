@@ -34,12 +34,17 @@ await page.getByRole('heading', { name: 'Customer accounts are not open in this 
 const auth = await page.locator('body').innerText();
 await page.screenshot({ path: path.join(outputDir, 'production-locked-auth.png'), fullPage: true });
 
+await page.evaluate(() => { window.location.hash = '#/auth/reset'; });
+await page.getByRole('heading', { name: 'Customer accounts are not open in this build' }).waitFor();
+const recovery = await page.locator('body').innerText();
+
 const result = {
   homeStatus: homeResponse?.status() ?? null,
   homeStatesAccountBoundary: home.includes('This build has no verified customer database connection'),
   homeAvoidsUninstalledClaims: !home.includes('Connect your accounts') && !home.includes('Snap receipts'),
   appFailsClosed: app.includes('Customer accounts are not open in this build'),
   authFailsClosed: auth.includes('Customer accounts are not open in this build'),
+  recoveryFailsClosed: recovery.includes('Customer accounts are not open in this build'),
   fixtureBusinessAbsent: !app.includes('Phở Bình Minh') && !app.includes('Lotus Nail'),
   fixtureNavigationAbsent: !app.includes('Transactions') && !app.includes('Receipts'),
   horizontalOverflow: await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth),
@@ -47,7 +52,8 @@ const result = {
 
 const passed = result.homeStatus === 200 && result.homeStatesAccountBoundary &&
   result.homeAvoidsUninstalledClaims && result.appFailsClosed && result.authFailsClosed &&
-  result.fixtureBusinessAbsent && result.fixtureNavigationAbsent && !result.horizontalOverflow;
+  result.recoveryFailsClosed && result.fixtureBusinessAbsent && result.fixtureNavigationAbsent &&
+  !result.horizontalOverflow;
 console.log(JSON.stringify({ result, errors, passed }, null, 2));
 
 await page.close();

@@ -12,6 +12,7 @@ import { sharingService, type Caller } from '../services';
 import type { Business, Industry, Locale, Role } from '../types';
 import type { RuntimeMode } from '../lib/env';
 import { Home, SignUp, Login, Onboarding } from '../features/marketing/screens';
+import { ResetPassword } from '../features/marketing/authForms';
 import { ChatGuide } from '../features/chat/ChatGuide';
 import { Payroll } from '../features/payroll/screens';
 import { Dashboard, Transactions, Receipts, Connections } from '../features/dashboard/screens';
@@ -75,6 +76,10 @@ function publicRoute(path: string, demoIndustry: Industry, status: AuthStatus): 
   }
   if (path === '/auth/sign-up') return <SignUp />;
   if (path === '/auth/login') return <Login />;
+  if (path === '/auth/reset') {
+    if (status === 'loading') return <SessionLoading />;
+    return <ResetPassword />;
+  }
   if (path === '/guide') {
     return status === 'demo' ? <SyntheticGuide /> : <ProductUnavailable />;
   }
@@ -167,14 +172,10 @@ function useActiveBusiness(activeBusinessId: string | null, nonce: number) {
  * user holds at least one accepted membership.
  */
 function AppArea({
-  business, forcedState,
-}: { business: Business; forcedState?: 'loading' | 'error' }) {
+  business, role, forcedState,
+}: { business: Business; role: Role; forcedState?: 'loading' | 'error' }) {
   const { path } = useNav();
-  const { identity, activeRole, activeBusinessId } = useAuth();
-
-  // A signed-in user with no resolved role in the active business gets the
-  // least privilege that still allows reading, never an assumed 'owner'.
-  const role: Role = activeRole ?? 'tax_professional';
+  const { identity, activeBusinessId } = useAuth();
   const userId = identity?.userId ?? '';
   const businessId = activeBusinessId ?? business.id;
 
@@ -253,7 +254,9 @@ function Routed({
   demoIndustry, demoRole, forcedState,
 }: { demoIndustry: Industry; demoRole: Role; forcedState?: 'loading' | 'error' }) {
   const { path, navigate } = useNav();
-  const { status, activeBusinessId, needsOnboarding, identity } = useAuth();
+  const {
+    status, activeBusinessId, activeRole, needsOnboarding, identity, refreshIdentity,
+  } = useAuth();
   const [nonce, setNonce] = useState(0);
   const businessState = useActiveBusiness(activeBusinessId, nonce);
 
@@ -285,14 +288,19 @@ function Routed({
   if (needsOnboarding) return <SessionLoading />;
 
   // Session is valid but the profile read failed.
-  if (identity === null) return <IdentityUnavailable onRetry={() => setNonce((n) => n + 1)} />;
+  if (identity === null) {
+    return <IdentityUnavailable onRetry={() => { void refreshIdentity(); setNonce((n) => n + 1); }} />;
+  }
 
   if (businessState.status === 'error') {
     return <IdentityUnavailable onRetry={() => setNonce((n) => n + 1)} />;
   }
   if (businessState.status !== 'ready') return <SessionLoading />;
+  // Membership selection and business loading must resolve to the same role.
+  // Never synthesize a fallback role when authorization state is inconsistent.
+  if (activeRole === null) return <IdentityUnavailable onRetry={() => setNonce((n) => n + 1)} />;
 
-  return <AppArea business={businessState.business} forcedState={forcedState} />;
+  return <AppArea business={businessState.business} role={activeRole} forcedState={forcedState} />;
 }
 
 export default function App({
