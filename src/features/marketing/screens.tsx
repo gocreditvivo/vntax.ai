@@ -419,6 +419,7 @@ export function Onboarding({
  * detail lives on the front face instead of a wordmark.
  */
 function HeroLedgerCard() {
+  const { t } = useI18n();
   return (
     <div className="relative mx-auto aspect-square w-full max-w-sm p-6 sm:max-w-md sm:p-8 lg:max-w-xl" aria-hidden="true">
       <div className="absolute inset-0 rounded-full bg-jade-600/10 blur-3xl" />
@@ -491,7 +492,7 @@ function HeroLedgerCard() {
       </svg>
 
       <div className="absolute -bottom-4 left-1/2 w-max -translate-x-1/2 rounded-xl border border-line bg-white px-4 py-2 font-mono text-xs text-content-primary shadow-lg sm:-bottom-2">
-        $3,184 <span className="text-content-muted">est. refund</span>
+        {t.marketing.workflowProof}
       </div>
     </div>
   );
@@ -508,4 +509,3 @@ function LangCard({ label, note, onClick }: { label: string; note: string; onCli
     </button>
   );
 }
-

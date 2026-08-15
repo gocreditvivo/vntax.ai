@@ -35,6 +35,7 @@ yarn-error.log*
 coverage/
 playwright-report/
 test-results/
+qa-output/
 
 # Offline-review scaffolding — delete before production
 # (kept in the first commit so the work is reviewable, remove once Vite runs)

@@ -113,6 +113,7 @@ export const vi: Dict = {
     salon: 'Tiệm nail',
     settings: 'Cài đặt',
     connections: 'Tài khoản đã nối',
+    payroll: 'Bảng tính lương DC',
   },
 
   marketing: {
@@ -120,6 +121,7 @@ export const vi: Dict = {
     heroTitle: 'Tự động hóa thuế thông minh cho nhà hàng và tiệm nail',
     heroBody:
       'Theo dõi chi phí. Sắp xếp hóa đơn. Tìm các khoản khấu trừ có thể áp dụng. Sẵn sàng cho mùa thuế.',
+    workflowProof: 'Sổ sách đã sẵn sàng để xem lại',
     ctaPrimary: 'Dùng thử miễn phí',
     ctaSecondary: 'Xem cách hoạt động',
     productBoundary:
@@ -469,4 +471,3 @@ export const vi: Dict = {
     business_expense: { name: 'Business expense', gloss: 'Chi phí kinh doanh' },
   },
 };
-

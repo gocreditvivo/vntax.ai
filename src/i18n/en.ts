@@ -104,6 +104,7 @@ export const en = {
     salon: 'Nail salon',
     settings: 'Settings',
     connections: 'Connections',
+    payroll: 'DC payroll worksheet',
   },
 
   marketing: {
@@ -111,6 +112,7 @@ export const en = {
     heroTitle: 'Smart tax automation for restaurants and nail salons',
     heroBody:
       'Track expenses. Organize receipts. Find possible deductions. Stay ready for tax time.',
+    workflowProof: 'Records organized for review',
     ctaPrimary: 'Start free',
     ctaSecondary: 'See how it works',
     productBoundary:
@@ -476,4 +478,3 @@ type Widen<T> = T extends string ? string
   : T;
 
 export type Dict = Widen<typeof en>;
-

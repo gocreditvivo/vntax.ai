@@ -11,6 +11,7 @@ import { sharingService, type Caller } from '../services';
 import type { Business, Industry, Locale, Role } from '../types';
 import { Home, SignUp, Login, Onboarding } from '../features/marketing/screens';
 import { ChatGuide } from '../features/chat/ChatGuide';
+import { Payroll } from '../features/payroll/screens';
 import { Dashboard, Transactions, Receipts, Connections } from '../features/dashboard/screens';
 import {
   Deductions, Quarterly, Documents, ExportCenter, Sharing,
@@ -159,6 +160,7 @@ function Shell({
     if (path.startsWith('/app/documents')) return <Documents caller={caller} />;
     if (path.startsWith('/app/exports')) return <ExportCenter caller={caller} />;
     if (path.startsWith('/app/connections')) return <Connections business={business} caller={caller} />;
+    if (path.startsWith('/app/payroll')) return <Payroll />;
     if (path.startsWith('/app/collaboration')) return <Sharing caller={caller} />;
     // Industry routes mount only for the matching industry — a salon build
     // contains no restaurant screens.
