@@ -30,12 +30,16 @@ VNTax does not infer a demo from missing production credentials.
 | Mode | How selected | Customer-data behavior |
 |---|---|---|
 | Locked | Default build without verified Supabase variables | Signup and app routes fail closed; no fixture dashboard is exposed |
-| Live limited | Valid `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` | Live authentication and business setup; only the local 2026 DC payroll worksheet is enabled after sign-in |
+| Live limited | Valid variables for a dedicated VNTax Supabase project | Live authentication and business setup; only the local 2026 DC payroll worksheet is enabled after sign-in |
 | Synthetic demo | Explicit `VITE_ENABLE_SYNTHETIC_DEMO=true` build | Fictional fixtures only, with a persistent warning not to enter personal, tax, banking, employee, or customer data |
 
 Transactions, receipts, banking, OCR, exports, and professional sharing are not
 wired to live tenant data. A configured account never falls through to those
 fixture-backed screens.
+
+The historical TrinityAI relay project is explicitly forbidden as a VNTax
+customer-data target. Production requires a separate Supabase project and an
+authoritative export of the missing core schema/RLS migrations.
 
 ### Reviewing without installing
 
@@ -81,7 +85,9 @@ Every app screen implements four states: **loading**, **empty**, **error**,
 
 ```
 npm run test
-  4 files, 194 tests, 0 failed
+  4 files, 196 tests, 0 failed
+npm run test:rls-tool
+  6 verifier safety tests, 0 failed
 ```
 
 | Group | Covers |

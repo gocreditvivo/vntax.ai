@@ -18,7 +18,9 @@ import type { AuthError } from '@supabase/supabase-js';
 
 import type * as EnvModule from '../lib/env';
 import type * as SupabaseModule from '../lib/supabase';
-import { looksLikeServiceRoleKey, resolveRuntimeMode } from '../lib/env';
+import {
+  looksLikeServiceRoleKey, resolveRuntimeMode, validateSupabaseEnv,
+} from '../lib/env';
 import { parseNumeric } from '../lib/supabase';
 import {
   isValidEmail, isValidPassword, mapAuthError, MIN_PASSWORD_LENGTH,
@@ -78,6 +80,22 @@ describe('runtime mode boundary', () => {
 
   it('never lets demo mode replace a configured live account boundary', () => {
     expect(resolveRuntimeMode(true, true)).toBe('live_limited');
+  });
+
+  it('refuses the shared TrinityAI relay project as a VNTax customer boundary', () => {
+    const result = validateSupabaseEnv(
+      'https://rcmcqcinndypoupgjezi.supabase.co',
+      'sb_publishable_test',
+    );
+    expect(result.configured).toBe(false);
+    if (!result.configured) expect(result.reason).toContain('shared TrinityAI relay');
+  });
+
+  it('accepts a different HTTPS Supabase project with a publishable key', () => {
+    expect(validateSupabaseEnv(
+      'https://dedicated-vntax-project.supabase.co',
+      'sb_publishable_test',
+    ).configured).toBe(true);
   });
 });
 

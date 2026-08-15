@@ -33,6 +33,18 @@ The distinction is enforced in code, not left to deployment instructions:
 | Quarterly tax estimate | Unapproved fixture ruleset | Planning demo only; cannot execute as a production determination |
 | Billing and money movement | Not installed | Unavailable |
 
+## Supabase project isolation blocker
+
+The project historically documented as dedicated VNTax
+(`rcmcqcinndypoupgjezi`) is also the TrinityAI relay project. Its publishable
+browser key can anonymously select `relay_messages`. It is therefore forbidden
+in `src/lib/env.ts` and must not be used for VNTax customer production.
+
+Production requires a genuinely separate VNTax Supabase project. The original
+core schema, RLS, and hardening migrations must be exported through an approved
+admin workflow and committed in reproducible order before later incremental
+migrations are applied. The current checkout cannot bootstrap a fresh project.
+
 ## Verification commands
 
 Default production bundle:
@@ -58,8 +70,9 @@ production candidate. A demo bundle is never the production artifact.
 
 ## Current verification evidence
 
-- Default production build: 194/194 tests, TypeScript, zero-warning lint,
-  production bundle, and dependency audit pass locally.
+- Default production build: 196/196 application tests, 6/6 RLS-verifier safety
+  tests, TypeScript, zero-warning lint, production bundle, and dependency audit
+  pass locally.
 - Locked-runtime Chrome check: homepage states the account boundary; signup and
   `/app` routes render the locked state; no fixture business or fixture feature
   navigation appears.
@@ -92,6 +105,7 @@ production candidate. A demo bundle is never the production artifact.
    RLS isolation tests, including revoked membership and expired professional
    grants. The current migration folder contains incremental changes that refer
    to pre-existing tables/functions and cannot bootstrap a fresh project.
+   Do this in a dedicated VNTax project, not the shared TrinityAI relay project.
 3. Install private object storage, ownership policies, file-type and size
    validation, malware controls, retention/deletion, and recovery procedures
    before accepting receipts or tax documents.
