@@ -39,8 +39,8 @@ function isLocale(v: unknown): v is Locale {
 }
 
 /**
- * Preference order: saved choice, then browser language, then English.
- * A returning Vietnamese-speaking user should not re-pick every visit.
+ * Preference order: explicit saved choice, then the product default.
+ * Browser language must not override the first-load English requirement.
  */
 function detectLocale(fallback: Locale): Locale {
   if (typeof window === 'undefined') return fallback;
@@ -51,9 +51,6 @@ function detectLocale(fallback: Locale): Locale {
   } catch {
     // Private browsing can throw on storage access; fall through.
   }
-
-  const nav = window.navigator?.language?.slice(0, 2).toLowerCase();
-  if (nav === 'vi' || nav === 'es') return nav;
 
   return fallback;
 }

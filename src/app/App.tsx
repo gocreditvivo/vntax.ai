@@ -305,7 +305,7 @@ function Routed({
 
 export default function App({
   initialPath = '/',
-  initialLocale = 'vi',
+  initialLocale = 'en',
   industry = 'restaurant',
   role = 'owner',
   forcedState,

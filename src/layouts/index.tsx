@@ -85,6 +85,9 @@ export function AuthLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-cream px-5 py-12">
       <div className="w-full max-w-md">
+        <div className="mb-4 flex justify-end">
+          <LocaleSwitch compact />
+        </div>
         <Link to="/" className="display-section mb-6 block text-center text-2xl text-jade-800">
           {t.common.appName}
         </Link>

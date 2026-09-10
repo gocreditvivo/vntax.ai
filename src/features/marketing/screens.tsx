@@ -151,7 +151,7 @@ const ENTITY_TYPES: EntityType[] = [
 export function Onboarding({
   step, fallbackIndustry = 'restaurant',
 }: { step: string; fallbackIndustry?: Industry }) {
-  const { t } = useI18n();
+  const { t, setLocale } = useI18n();
   const { navigate } = useNav();
   const { status, identity, refreshIdentity, setActiveBusinessId } = useAuth();
 
@@ -171,6 +171,10 @@ export function Onboarding({
   const STEPS = ['language', 'owner', 'business', 'industry', 'entity', 'connections', 'complete'];
   const idx = Math.max(1, STEPS.indexOf(step) + 1);
   const next = (to: string) => navigate(`/onboarding/${to}`);
+  const chooseLanguage = (locale: 'en' | 'vi') => {
+    setLocale(locale);
+    next('owner');
+  };
 
   /** Writes through to sessionStorage on every keystroke so back never loses input. */
   const set = <K extends keyof OnboardingDraft>(key: K, value: OnboardingDraft[K]) => {
@@ -252,8 +256,8 @@ export function Onboarding({
         <>
           <p className="mb-6 text-ink-500">{t.onboarding.languageBody}</p>
           <div className="grid gap-3 sm:grid-cols-2">
-            <LangCard label="Tiếng Việt" note="Ngôn ngữ chính" onClick={() => next('owner')} />
-            <LangCard label="English" note="Primary language" onClick={() => next('owner')} />
+            <LangCard label="English" note="Primary language" onClick={() => chooseLanguage('en')} />
+            <LangCard label="Tiếng Việt" note="Ngôn ngữ phụ" onClick={() => chooseLanguage('vi')} />
           </div>
         </>
       )}
