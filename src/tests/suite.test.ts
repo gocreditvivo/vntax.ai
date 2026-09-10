@@ -96,9 +96,14 @@ describe('compliance — product boundary language', () => {
     expect(en.legal.reviewRecommended).toBe('Professional review recommended');
   });
 
-  it('states the customer promise exactly as specified', () => {
+  it('does not advertise an estimated refund without customer facts or an approved engine', () => {
+    expect(en.marketing.workflowProof.toLowerCase()).not.toMatch(/refund|\$/);
+    expect(vi.marketing.workflowProof.toLowerCase()).not.toMatch(/refund|\$/);
+  });
+
+  it('states an accurate controlled-preview promise', () => {
     expect(en.legal.promise).toBe(
-      'We organize your business finances and help you prepare for tax time.'
+      'Preview planned organization workflows with fictional records.'
     );
   });
 

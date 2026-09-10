@@ -14,11 +14,14 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { StrictMode } from 'react';
 import type { AuthError } from '@supabase/supabase-js';
 
 import type * as EnvModule from '../lib/env';
 import type * as SupabaseModule from '../lib/supabase';
-import { looksLikeServiceRoleKey } from '../lib/env';
+import {
+  looksLikeServiceRoleKey, resolveRuntimeMode, validateSupabaseEnv,
+} from '../lib/env';
 import { parseNumeric } from '../lib/supabase';
 import {
   isValidEmail, isValidPassword, mapAuthError, MIN_PASSWORD_LENGTH,
@@ -64,6 +67,36 @@ describe('service-role key detection', () => {
     expect(looksLikeServiceRoleKey('not-a-key')).toBe(false);
     expect(looksLikeServiceRoleKey('')).toBe(false);
     expect(looksLikeServiceRoleKey('a.b.c')).toBe(false);
+  });
+});
+
+describe('runtime mode boundary', () => {
+  it('locks a build when production credentials and explicit demo opt-in are both absent', () => {
+    expect(resolveRuntimeMode(false, false)).toBe('locked');
+  });
+
+  it('allows fixtures only after explicit synthetic demo opt-in', () => {
+    expect(resolveRuntimeMode(false, true)).toBe('synthetic_demo');
+  });
+
+  it('never lets demo mode replace a configured live account boundary', () => {
+    expect(resolveRuntimeMode(true, true)).toBe('live_limited');
+  });
+
+  it('refuses the shared TrinityAI relay project as a VNTax customer boundary', () => {
+    const result = validateSupabaseEnv(
+      'https://rcmcqcinndypoupgjezi.supabase.co',
+      'sb_publishable_test',
+    );
+    expect(result.configured).toBe(false);
+    if (!result.configured) expect(result.reason).toContain('shared TrinityAI relay');
+  });
+
+  it('accepts a different HTTPS Supabase project with a publishable key', () => {
+    expect(validateSupabaseEnv(
+      'https://dedicated-vntax-project.supabase.co',
+      'sb_publishable_test',
+    ).configured).toBe(true);
   });
 });
 
@@ -281,6 +314,14 @@ interface FakeOptions {
   signInResult?: { error: AuthError | null };
   profile?: Record<string, unknown> | null;
   memberships?: Record<string, unknown>[];
+  business?: Record<string, unknown> | null;
+  /** Delays profile hydration so auth-event ordering can be exercised. */
+  identityDelayMs?: number;
+  profileError?: AuthError | null;
+  updatedPassword?: string;
+  updatePasswordError?: AuthError | null;
+  signOutError?: AuthError | null;
+  authCallback?: (event: string, session: Record<string, unknown> | null) => void;
 }
 
 let fake: FakeOptions;
@@ -298,7 +339,11 @@ vi.mock('../lib/supabase', async () => {
   const actual = await vi.importActual<typeof SupabaseModule>('../lib/supabase');
 
   const table = (name: string) => {
-    const rows = name === 'profiles' ? fake.profile : fake.memberships ?? [];
+    const rows = name === 'profiles'
+      ? fake.profile
+      : name === 'businesses'
+        ? fake.business ?? null
+        : fake.memberships ?? [];
     const builder: Record<string, unknown> = {};
     const chain = () => builder;
     Object.assign(builder, {
@@ -306,7 +351,15 @@ vi.mock('../lib/supabase', async () => {
       eq: chain,
       not: chain,
       order: () => Promise.resolve({ data: fake.memberships ?? [], error: null }),
-      maybeSingle: () => Promise.resolve({ data: rows, error: null }),
+      maybeSingle: async () => {
+        if (name === 'profiles' && fake.identityDelayMs) {
+          await new Promise((resolve) => setTimeout(resolve, fake.identityDelayMs));
+        }
+        return {
+          data: rows,
+          error: name === 'profiles' ? (fake.profileError ?? null) : null,
+        };
+      },
       single: () => Promise.resolve({ data: rows, error: null }),
       insert: chain,
       then: undefined,
@@ -322,14 +375,24 @@ vi.mock('../lib/supabase', async () => {
           if (fake.sessionDelayMs) await new Promise((r) => setTimeout(r, fake.sessionDelayMs));
           return { data: { session: fake.session }, error: null };
         },
-        onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
+        onAuthStateChange: (callback: FakeOptions['authCallback']) => {
+          fake.authCallback = callback;
+          return { data: { subscription: { unsubscribe: () => {} } } };
+        },
         signInWithPassword: async () =>
           fake.signInResult?.error
             ? { data: { session: null }, error: fake.signInResult.error }
             : { data: { session: fake.session }, error: null },
         signUp: async () => ({ data: { session: fake.session, user: null }, error: null }),
-        signOut: async () => ({ error: null }),
+        signOut: async () => ({ error: fake.signOutError ?? null }),
         resetPasswordForEmail: async () => ({ error: null }),
+        updateUser: async ({ password }: { password: string }) => {
+          fake.updatedPassword = password;
+          return {
+            data: { user: fake.session ? (fake.session.user ?? null) : null },
+            error: fake.updatePasswordError ?? null,
+          };
+        },
       },
       from: table,
     }),
@@ -387,6 +450,62 @@ describe('auth guard', () => {
     expect(screen.getByText(en.common.loading)).toBeInTheDocument();
   });
 
+  it('restores authentication under React Strict Mode lifecycle replay', async () => {
+    fake = { session: SESSION, profile: PROFILE, memberships: [] };
+
+    const App = await importApp();
+    render(
+      <StrictMode>
+        <App initialPath="/onboarding/business" initialLocale="en" />
+      </StrictMode>,
+    );
+
+    expect(await screen.findByRole('heading', { name: en.onboarding.businessTitle })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: en.auth.loginTitle })).not.toBeInTheDocument();
+  });
+
+  it('does not let a stale identity lookup restore a session after sign-out', async () => {
+    fake = {
+      session: SESSION,
+      profile: PROFILE,
+      memberships: [],
+      identityDelayMs: 60,
+    };
+
+    const App = await importApp();
+    render(<App initialPath="/app/dashboard" initialLocale="en" />);
+
+    await waitFor(() => expect(fake.authCallback).toBeTypeOf('function'));
+    fake.authCallback?.('SIGNED_OUT', null);
+
+    expect(await screen.findByRole('heading', { name: en.auth.loginTitle })).toBeInTheDocument();
+    await new Promise((resolve) => setTimeout(resolve, 90));
+    expect(screen.getByRole('heading', { name: en.auth.loginTitle })).toBeInTheDocument();
+    expect(screen.queryByText(en.onboarding.businessTitle)).not.toBeInTheDocument();
+  });
+
+  it('retries the failed identity request instead of only retrying the business row', async () => {
+    fake = {
+      session: SESSION,
+      profile: PROFILE,
+      memberships: [],
+      profileError: {
+        name: 'PostgrestError',
+        message: 'temporary profile failure',
+      } as AuthError,
+    };
+
+    const user = userEvent.setup();
+    const App = await importApp();
+    render(<App initialPath="/app/dashboard" initialLocale="en" />);
+
+    expect(await screen.findByText(en.auth.identityUnavailable)).toBeInTheDocument();
+    fake.profileError = null;
+    await user.click(screen.getByRole('button', { name: en.common.retry }));
+
+    expect(await screen.findByRole('heading', { name: en.onboarding.businessTitle })).toBeInTheDocument();
+  });
+
   it('renders the login form in Vietnamese when the locale is Vietnamese', async () => {
     const App = await importApp();
     render(<App initialPath="/app/dashboard" initialLocale="vi" />);
@@ -394,6 +513,67 @@ describe('auth guard', () => {
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: viDict.auth.loginTitle })).toBeInTheDocument();
     });
+  });
+
+  it('never mounts fixture ledger screens for a configured real account', async () => {
+    const businessId = 'bbbb1111-2222-4333-8444-555566667777';
+    fake = {
+      session: SESSION,
+      profile: PROFILE,
+      memberships: [{
+        user_id: SESSION.user.id,
+        business_id: businessId,
+        role: 'owner',
+        invited_by_user_id: null,
+        accepted_at: '2026-08-15T00:00:00Z',
+        grant_id: null,
+      }],
+      business: {
+        id: businessId,
+        legal_name: 'Live Pilot LLC',
+        dba_name: null,
+        industry: 'restaurant',
+        entity_type: 'unknown',
+        address: {},
+        phone: null,
+        email: null,
+        started_year: null,
+        location_count: 1,
+        accounting_method: 'unknown',
+        fiscal_year_end_month: 12,
+        employee_count: null,
+        contractor_count: null,
+        has_ein: false,
+        sales_tax_registered: null,
+        payroll_provider: null,
+        merchant_processor: null,
+        delivery_platforms: [],
+        handles_cash: false,
+        prior_year_return_available: null,
+        created_at: '2026-08-15T00:00:00Z',
+        created_by: SESSION.user.id,
+        updated_at: '2026-08-15T00:00:00Z',
+      },
+    };
+
+    const App = await importApp();
+    render(<App initialPath="/app/transactions" initialLocale="en" />);
+
+    expect(await screen.findByRole('heading', { name: en.states.livePilotTitle })).toBeInTheDocument();
+    expect(screen.queryByText('Phở Bình Minh')).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: en.nav.transactions })).not.toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: en.nav.payroll }).length).toBeGreaterThan(0);
+  });
+
+  it('does not show synthetic connection actions during live onboarding', async () => {
+    fake = { session: SESSION, profile: PROFILE, memberships: [] };
+
+    const App = await importApp();
+    render(<App initialPath="/onboarding/connections" initialLocale="en" />);
+
+    expect(await screen.findByText(en.onboarding.connectionsUnavailable)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: en.connections.connect })).not.toBeInTheDocument();
+    expect(screen.getByText(en.states.livePilotBanner)).toBeInTheDocument();
   });
 });
 
@@ -413,6 +593,14 @@ describe('login form', () => {
     await user.click(await screen.findByRole('button', { name: en.common.signIn }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(en.auth.errors.required_fields);
+  });
+
+  it('does not collect an unused phone number during signup', async () => {
+    const App = await importApp();
+    render(<App initialPath="/auth/sign-up" initialLocale="en" />);
+
+    expect(await screen.findByRole('heading', { name: en.auth.signUpTitle })).toBeInTheDocument();
+    expect(screen.queryByLabelText(en.auth.phone)).not.toBeInTheDocument();
   });
 
   it('shows a translated error on bad credentials, and does not name the field', async () => {
@@ -463,5 +651,75 @@ describe('login form', () => {
     await user.click(screen.getByRole('button', { name: en.common.continue }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(en.auth.errors.weak_password);
+  });
+});
+
+describe('password recovery', () => {
+  beforeEach(() => {
+    fake = { session: SESSION, profile: PROFILE, memberships: [] };
+    window.localStorage.clear();
+    window.sessionStorage.clear();
+    vi.resetModules();
+  });
+
+  it('completes the recovery route and clears the recovery session', async () => {
+    const user = userEvent.setup();
+    const App = await importApp();
+    render(<App initialPath="/auth/reset" initialLocale="en" />);
+
+    expect(await screen.findByRole('heading', { name: en.auth.resetTitle })).toBeInTheDocument();
+    await user.type(screen.getByLabelText(en.auth.newPassword), 'new-secure-password');
+    await user.type(screen.getByLabelText(en.auth.confirmPassword), 'new-secure-password');
+    await user.click(screen.getByRole('button', { name: en.auth.resetAction }));
+
+    expect(await screen.findByRole('heading', { name: en.auth.resetCompleteTitle })).toBeInTheDocument();
+    expect(fake.updatedPassword).toBe('new-secure-password');
+  });
+
+  it('removes the persisted browser session even when Supabase sign-out fails', async () => {
+    fake.signOutError = {
+      name: 'AuthRetryableFetchError',
+      message: 'Failed to fetch',
+      status: 0,
+    } as AuthError;
+    window.localStorage.setItem('vntax.auth.session', 'sensitive-session');
+    window.localStorage.setItem('vntax.auth.session-code-verifier', 'recovery-verifier');
+
+    const user = userEvent.setup();
+    const App = await importApp();
+    render(<App initialPath="/auth/reset" initialLocale="en" />);
+
+    await screen.findByRole('heading', { name: en.auth.resetTitle });
+    await user.type(screen.getByLabelText(en.auth.newPassword), 'new-secure-password');
+    await user.type(screen.getByLabelText(en.auth.confirmPassword), 'new-secure-password');
+    await user.click(screen.getByRole('button', { name: en.auth.resetAction }));
+
+    expect(await screen.findByRole('heading', { name: en.auth.resetCompleteTitle })).toBeInTheDocument();
+    expect(window.localStorage.getItem('vntax.auth.session')).toBeNull();
+    expect(window.localStorage.getItem('vntax.auth.session-code-verifier')).toBeNull();
+  });
+
+  it('fails closed when the recovery session is absent', async () => {
+    fake.session = null;
+    const App = await importApp();
+    render(<App initialPath="/auth/reset" initialLocale="en" />);
+
+    expect(await screen.findByRole('heading', { name: en.auth.resetInvalidTitle })).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent(en.auth.errors.invalid_recovery_link);
+    expect(screen.queryByLabelText(en.auth.newPassword)).not.toBeInTheDocument();
+  });
+
+  it('does not contact Supabase when password confirmation differs', async () => {
+    const user = userEvent.setup();
+    const App = await importApp();
+    render(<App initialPath="/auth/reset" initialLocale="en" />);
+
+    await screen.findByRole('heading', { name: en.auth.resetTitle });
+    await user.type(screen.getByLabelText(en.auth.newPassword), 'new-secure-password');
+    await user.type(screen.getByLabelText(en.auth.confirmPassword), 'different-password');
+    await user.click(screen.getByRole('button', { name: en.auth.resetAction }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(en.auth.errors.password_mismatch);
+    expect(fake.updatedPassword).toBeUndefined();
   });
 });

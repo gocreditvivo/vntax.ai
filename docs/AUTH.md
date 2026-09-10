@@ -8,8 +8,8 @@ the things that went wrong and why the fix is what it is.
 Two environment variables, both safe to expose in the browser:
 
 ```
-VITE_SUPABASE_URL=https://rcmcqcinndypoupgjezi.supabase.co
-VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+VITE_SUPABASE_URL=https://<dedicated-vntax-project-ref>.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=<dedicated VNTax publishable key>
 ```
 
 `src/lib/env.ts` inspects the key at startup and **throws if it looks like a
@@ -20,12 +20,20 @@ database access inside the JavaScript bundle. This is the single worst mistake
 available in a Supabase frontend, it is easy to make while debugging, and it
 now fails loudly instead of silently working.
 
-## Demo mode
+The historical host `rcmcqcinndypoupgjezi.supabase.co` is explicitly refused.
+It is the shared TrinityAI relay project, and its publishable key can select
+`relay_messages`. A public VNTax bundle must never expose that shared project as
+though it were a dedicated customer boundary.
 
-When the variables are absent the app runs against in-memory fixtures. This is
-not a convenience: it is the boundary that guarantees fixture financial data can
-never be served to a real signed-in account, and vice versa. The existing
-test suite and the static preview both run in this mode.
+## Runtime modes
+
+- Missing or forbidden database configuration enters `locked` mode. Signup,
+  onboarding, and application routes fail closed.
+- A separately configured Supabase project enters `live_limited` mode. Only
+  authentication, business setup, and the local restaurant payroll worksheet
+  are exposed; fixture ledger features cannot mount.
+- Fictional fixtures require an explicit
+  `VITE_ENABLE_SYNTHETIC_DEMO=true` build and carry a persistent warning.
 
 ## Session handling
 
@@ -41,7 +49,7 @@ Behaviours worth knowing:
 | Identity loading is deferred with `queueMicrotask` | Awaiting a Supabase query inside the `onAuthStateChange` callback deadlocks the client. |
 | `TOKEN_REFRESHED` updates the token only | Re-reading the profile on every hourly refresh is wasted work and a flicker source. |
 | A failed identity load does not sign the user out | A transient network error is not an authentication failure. The user sees a retry, not a logout. |
-| An unrecognised membership role degrades to `tax_professional` | Least privilege. Degrading to `owner` on an unknown value would be a privilege escalation triggered by a typo in a database row. |
+| An unrecognised membership role is dropped | Unknown authority grants no membership access. It is never promoted or treated as a readable role. |
 | Sign-out clears the local session even if the network call fails | These businesses share back-office computers. Leaving a session alive because a request timed out is a real exposure. |
 | Sign-in collapses "no such user" and "wrong password" | Distinguishing them turns the login form into an account-enumeration oracle. |
 
@@ -89,9 +97,20 @@ dependent policies followed automatically rather than being hand-rewritten —
 which matters, because rewriting 52 security policies by hand is precisely how
 isolation bugs get introduced.
 
-## Verification
+A later manual security review found that `shares_business_with()` did not
+require either joined membership to have `accepted_at` set. The forward-only
+`20260815000100_vntax_require_accepted_shared_memberships.sql` migration now
+requires accepted membership on both sides. This correction is structurally
+verified in the repository but still requires the dedicated-project, two-user
+live RLS run described below.
 
-`tools/rls-smoke-test.sh` runs 38 checks against the live database using two
+## Historical verification and current verifier
+
+The prior handoff records a 38/38 run against the historical database. That is
+a historical assertion, not current release evidence, and it does not approve
+the shared relay project for customer production.
+
+`tools/rls-smoke-test.mjs` now performs current checks using two
 separate accounts and **only the publishable key** — the same key the browser
 holds. Using a service-role key here would prove nothing, since it bypasses RLS
 by design. The script asserts the tokens carry `role=authenticated` before it
@@ -108,22 +127,44 @@ Covered:
 - The profile and owner-membership triggers firing
 - Each account reading back its own newly created business
 
-Result: **38/38 passed, no cross-account access in either direction.**
+The current tool deliberately has no built-in emails or passwords and never
+writes to `auth.users`. Create two confirmed disposable users through an
+approved dashboard/admin workflow, confirm each sees zero businesses, and set:
 
-```bash
-SUPABASE_URL=... SUPABASE_PUBLISHABLE_KEY=... bash tools/rls-smoke-test.sh
+```powershell
+$env:SUPABASE_URL='https://<dedicated-vntax-project-ref>.supabase.co'
+$env:SUPABASE_PUBLISHABLE_KEY='<publishable key>'
+$env:RLS_EMAIL_A='<disposable account A>'
+$env:RLS_PASSWORD_A='<unique password A>'
+$env:RLS_EMAIL_B='<disposable account B>'
+$env:RLS_PASSWORD_B='<unique password B>'
+$env:RLS_ALLOW_MUTATION='DELETE-DISPOSABLE-RLS-DATA'
+npm.cmd run verify:rls
 ```
 
-Test accounts are seeded with `tools/seed-rls-test-users.sql`, because the
-project has email confirmation enabled and a script has no mailbox. All test
-rows were deleted afterwards; every table is back to zero.
+The verifier creates one tagged business per account, checks both directions
+across every business-scoped table, probes cross-account writes and private RPC
+exposure, and deletes both businesses in `finally`. Failed cleanup fails the
+run and prints only the non-secret run ID for approved admin cleanup. Delete the
+two auth users after the run.
+
+Before creating either business, the verifier loads the table/column contract
+from `src/types/database.ts` and performs authenticated `limit=0` queries for
+all 16 VNTax business tables. A missing table or column stops the run before
+mutation. This is a structural compatibility check only; it does not prove the
+provenance or completeness of migration SQL, grants, policies, triggers, or
+private function bodies. See `SCHEMA_RECOVERY_AUDIT.md`.
+
+The fixed credentials formerly present in this repository were tested on
+2026-08-15; both returned `400 invalid_credentials` and issued no token. They
+were removed from the current tree, but Git history should still be treated as
+public and those values must never be reused.
 
 ## Known scope limits
 
-- Only `businesses` is wired to the database. Transactions, receipts and
-  documents still read the in-memory fixture store. This is safe because every
-  dashboard screen filters by `businessId`, and a real UUID matches no fixture —
-  a signed-in user sees correct empty states, never another business's data.
+- Only identity and `businesses` are wired to live data. Fixture-backed
+  transaction, receipt, document, connection, export, and sharing screens are
+  unavailable in `live_limited` mode rather than relying on UUID mismatch.
 - Address `localityId` is left empty rather than guessed. Filing authorities are
   address-level, and asserting a jurisdiction we have not resolved would be
   worse than showing it as unresolved.

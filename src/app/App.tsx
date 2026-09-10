@@ -1,16 +1,20 @@
 import { useEffect, useState } from 'react';
 import type { ReactElement } from 'react';
 import { I18nProvider, useI18n } from '../i18n';
-import { NavProvider, useNav } from './router';
+import { Link, NavProvider, useNav } from './router';
 import { AuthProvider, useAuth } from '../auth/AuthProvider';
+import type { AuthStatus } from '../auth/AuthProvider';
 import { AppLayout, AuthLayout } from '../layouts';
 import { Card, LoadingState } from '../components/ui';
 import { BUSINESSES } from '../mocks/fixtures';
 import { getBusiness } from '../data/businesses';
 import { sharingService, type Caller } from '../services';
 import type { Business, Industry, Locale, Role } from '../types';
+import type { RuntimeMode } from '../lib/env';
 import { Home, SignUp, Login, Onboarding } from '../features/marketing/screens';
+import { ResetPassword } from '../features/marketing/authForms';
 import { ChatGuide } from '../features/chat/ChatGuide';
+import { Payroll } from '../features/payroll/screens';
 import { Dashboard, Transactions, Receipts, Connections } from '../features/dashboard/screens';
 import {
   Deductions, Quarterly, Documents, ExportCenter, Sharing,
@@ -22,18 +26,67 @@ import {
  * read the marketing site, and the auth screens must be reachable precisely
  * when there is no session.
  */
-function publicRoute(path: string, demoIndustry: Industry): ReactElement | null {
+function ProductUnavailable() {
+  const { t } = useI18n();
+  return (
+    <AuthLayout>
+      <Card className="p-7 text-center">
+        <h1 className="display-section text-2xl text-content-primary">{t.states.productUnavailableTitle}</h1>
+        <p className="mt-3 text-sm text-content-muted">{t.states.productUnavailableBody}</p>
+        <Link to="/" className="mt-6 inline-flex rounded-full bg-jade-700 px-5 py-3 font-semibold text-white hover:bg-jade-800">
+          {t.common.back}
+        </Link>
+      </Card>
+    </AuthLayout>
+  );
+}
+
+function LivePilotStatus({ industry }: { industry: Industry }) {
+  const { t } = useI18n();
+  return (
+    <Card className="p-7">
+      <p className="text-xs font-semibold uppercase tracking-wide text-amber-800">{t.states.livePilotLabel}</p>
+      <h1 className="display-section mt-2 text-2xl text-content-primary">{t.states.livePilotTitle}</h1>
+      <p className="mt-3 max-w-2xl text-content-muted">{t.states.livePilotBody}</p>
+      {industry === 'restaurant' && (
+        <Link to="/app/payroll" className="mt-6 inline-flex rounded-full bg-jade-700 px-5 py-3 font-semibold text-white hover:bg-jade-800">
+          {t.nav.payroll}
+        </Link>
+      )}
+    </Card>
+  );
+}
+
+function SyntheticGuide() {
+  const { t } = useI18n();
+  return (
+    <div className="min-h-screen bg-cream px-4 py-8">
+      <p className="mx-auto mb-4 max-w-md rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+        {t.states.demoBanner}
+      </p>
+      <ChatGuide onComplete={() => {}} />
+    </div>
+  );
+}
+
+function publicRoute(path: string, demoIndustry: Industry, status: AuthStatus): ReactElement | null {
   if (path === '/' || path.startsWith('/#')) return <Home />;
+  if ((status === 'unconfigured' || status === 'demo') && path.startsWith('/auth/')) {
+    return <ProductUnavailable />;
+  }
   if (path === '/auth/sign-up') return <SignUp />;
   if (path === '/auth/login') return <Login />;
+  if (path === '/auth/reset') {
+    if (status === 'loading') return <SessionLoading />;
+    return <ResetPassword />;
+  }
   if (path === '/guide') {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-cream px-4 py-8">
-        <ChatGuide onComplete={() => {}} />
-      </div>
-    );
+    return status === 'demo' ? <SyntheticGuide /> : <ProductUnavailable />;
   }
   if (path.startsWith('/onboarding/')) {
+    if (status === 'unconfigured') return <ProductUnavailable />;
+    if (status === 'loading') return <SessionLoading />;
+    if (status === 'signed_out') return <Login />;
     return <Onboarding step={path.split('/')[2] ?? 'language'} fallbackIndustry={demoIndustry} />;
   }
   return null;
@@ -119,14 +172,10 @@ function useActiveBusiness(activeBusinessId: string | null, nonce: number) {
  * user holds at least one accepted membership.
  */
 function AppArea({
-  business, forcedState,
-}: { business: Business; forcedState?: 'loading' | 'error' }) {
+  business, role, forcedState,
+}: { business: Business; role: Role; forcedState?: 'loading' | 'error' }) {
   const { path } = useNav();
-  const { identity, activeRole, activeBusinessId } = useAuth();
-
-  // A signed-in user with no resolved role in the active business gets the
-  // least privilege that still allows reading, never an assumed 'owner'.
-  const role: Role = activeRole ?? 'tax_professional';
+  const { identity, activeBusinessId } = useAuth();
   const userId = identity?.userId ?? '';
   const businessId = activeBusinessId ?? business.id;
 
@@ -136,22 +185,27 @@ function AppArea({
       : { userId, role, businessId };
 
   return (
-    <Shell business={business} caller={caller} path={path} forcedState={forcedState} />
+    <Shell business={business} caller={caller} path={path} mode="live_limited" forcedState={forcedState} />
   );
 }
 
 /** Route table for the app shell. Shared by live and demo modes. */
 function Shell({
-  business, caller, path, forcedState,
+  business, caller, path, mode, forcedState,
 }: {
   business: Business;
   caller: Caller;
   path: string;
+  mode: Exclude<RuntimeMode, 'locked'>;
   forcedState?: 'loading' | 'error';
 }) {
   const industry = business.industry;
 
   const screen = (() => {
+    if (mode === 'live_limited') {
+      if (path.startsWith('/app/payroll') && industry === 'restaurant') return <Payroll />;
+      return <LivePilotStatus industry={industry} />;
+    }
     if (path.startsWith('/app/transactions')) return <Transactions business={business} caller={caller} state={forcedState} />;
     if (path.startsWith('/app/receipts')) return <Receipts business={business} caller={caller} />;
     if (path.startsWith('/app/deductions')) return <Deductions caller={caller} />;
@@ -159,6 +213,7 @@ function Shell({
     if (path.startsWith('/app/documents')) return <Documents caller={caller} />;
     if (path.startsWith('/app/exports')) return <ExportCenter caller={caller} />;
     if (path.startsWith('/app/connections')) return <Connections business={business} caller={caller} />;
+    if (path.startsWith('/app/payroll')) return <Payroll />;
     if (path.startsWith('/app/collaboration')) return <Sharing caller={caller} />;
     // Industry routes mount only for the matching industry — a salon build
     // contains no restaurant screens.
@@ -168,18 +223,15 @@ function Shell({
   })();
 
   return (
-    <AppLayout industry={industry} businessName={business.dbaName ?? business.legalName}>
+    <AppLayout industry={industry} businessName={business.dbaName ?? business.legalName} mode={mode}>
       {screen}
     </AppLayout>
   );
 }
 
 /**
- * Demo mode: no Supabase project configured. Used by the unit suite and the
- * static preview build, where fixtures are the intended data source.
- *
- * This path is unreachable in production — `envState.configured` is true there
- * — so fixture data can never be served to a real signed-in account.
+ * Explicit synthetic demo mode. Missing Supabase credentials alone never enter
+ * this path; the build must opt in with VITE_ENABLE_SYNTHETIC_DEMO=true.
  */
 function DemoArea({
   industry, role, path, forcedState,
@@ -195,14 +247,16 @@ function DemoArea({
       ? sharingService.buildProfessionalCaller('u_cpa', business.id, 2026, 'tax_2026')
       : { userId: role === 'owner' ? 'u_owner_rest' : 'u_manager', role, businessId: business.id };
 
-  return <Shell business={business} caller={caller} path={path} forcedState={forcedState} />;
+  return <Shell business={business} caller={caller} path={path} mode="synthetic_demo" forcedState={forcedState} />;
 }
 
 function Routed({
   demoIndustry, demoRole, forcedState,
 }: { demoIndustry: Industry; demoRole: Role; forcedState?: 'loading' | 'error' }) {
   const { path, navigate } = useNav();
-  const { status, activeBusinessId, needsOnboarding, identity } = useAuth();
+  const {
+    status, activeBusinessId, activeRole, needsOnboarding, identity, refreshIdentity,
+  } = useAuth();
   const [nonce, setNonce] = useState(0);
   const businessState = useActiveBusiness(activeBusinessId, nonce);
 
@@ -214,14 +268,16 @@ function Routed({
     if (isAppRoute && needsOnboarding) navigate('/onboarding/business');
   }, [isAppRoute, needsOnboarding, navigate]);
 
-  const pub = publicRoute(path, demoIndustry);
+  const pub = publicRoute(path, demoIndustry, status);
   if (pub) return pub;
 
   if (!isAppRoute) return <Home />;
 
-  if (status === 'unconfigured') {
+  if (status === 'demo') {
     return <DemoArea industry={demoIndustry} role={demoRole} path={path} forcedState={forcedState} />;
   }
+
+  if (status === 'unconfigured') return <ProductUnavailable />;
 
   // Neither app nor login until the session is known — this is what prevents
   // the login screen flashing on refresh.
@@ -232,19 +288,24 @@ function Routed({
   if (needsOnboarding) return <SessionLoading />;
 
   // Session is valid but the profile read failed.
-  if (identity === null) return <IdentityUnavailable onRetry={() => setNonce((n) => n + 1)} />;
+  if (identity === null) {
+    return <IdentityUnavailable onRetry={() => { void refreshIdentity(); setNonce((n) => n + 1); }} />;
+  }
 
   if (businessState.status === 'error') {
     return <IdentityUnavailable onRetry={() => setNonce((n) => n + 1)} />;
   }
   if (businessState.status !== 'ready') return <SessionLoading />;
+  // Membership selection and business loading must resolve to the same role.
+  // Never synthesize a fallback role when authorization state is inconsistent.
+  if (activeRole === null) return <IdentityUnavailable onRetry={() => setNonce((n) => n + 1)} />;
 
-  return <AppArea business={businessState.business} forcedState={forcedState} />;
+  return <AppArea business={businessState.business} role={activeRole} forcedState={forcedState} />;
 }
 
 export default function App({
   initialPath = '/',
-  initialLocale = 'vi',
+  initialLocale = 'en',
   industry = 'restaurant',
   role = 'owner',
   forcedState,

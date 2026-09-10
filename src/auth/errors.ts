@@ -21,6 +21,8 @@ export type AuthErrorCode =
   | 'invalid_email'
   | 'rate_limited'
   | 'required_fields'
+  | 'password_mismatch'
+  | 'invalid_recovery_link'
   | 'network'
   | 'not_configured'
   | 'unknown';

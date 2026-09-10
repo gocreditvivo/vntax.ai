@@ -12,36 +12,49 @@ import type { EntityType, Industry } from '../../types';
 
 export function Home() {
   const { t } = useI18n();
+  const { status } = useAuth();
   return (
     <MarketingLayout>
-      {/* hero */}
-      <section className="bg-gradient-to-b from-jade-800 to-jade-900 px-5 py-20 text-white">
-        <div className="mx-auto max-w-6xl">
-          <p className="mb-5 inline-flex rounded-full border border-white/25 bg-white/10 px-3 py-1.5 text-sm text-white/85">
-            {t.marketing.trustBadge}
-          </p>
-          <h1 className="display-hero max-w-3xl text-4xl sm:text-5xl lg:text-6xl">
-            {t.marketing.heroTitle}
-          </h1>
-          <p className="mt-5 max-w-xl text-lg text-white/80">{t.marketing.heroBody}</p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link
-              to="/auth/sign-up"
-              className="rounded-full bg-white px-6 py-3.5 font-semibold text-jade-800 hover:bg-cream"
-            >
-              {t.marketing.ctaPrimary}
-            </Link>
-            <Link
-              to="/#how"
-              className="rounded-full border border-white/40 px-6 py-3.5 font-semibold text-white hover:bg-white/10"
-            >
-              {t.marketing.ctaSecondary}
-            </Link>
+      {/* hero — april-inspired, light variant: pale neutral field (like
+          getapril.com's off-white background) instead of the jade block,
+          with jade/gold reserved for the illustration and primary CTA. */}
+      <section className="relative overflow-hidden bg-ink-50 px-5 py-20 text-content-primary">
+        <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
+          <div>
+            <p className="mb-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+              {status === 'demo'
+                ? t.states.demoBanner
+                : status === 'unconfigured'
+                  ? t.states.productUnavailableBody
+                  : t.states.livePilotBanner}
+            </p>
+            <p className="mb-5 inline-flex rounded-full border border-line bg-white px-3 py-1.5 font-mono text-xs uppercase tracking-wide text-content-secondary">
+              {t.marketing.trustBadge}
+            </p>
+            <h1 className="display-hero max-w-xl text-4xl text-content-primary sm:text-5xl lg:text-6xl">
+              {t.marketing.heroTitle}
+            </h1>
+            <p className="mt-5 max-w-xl text-lg text-content-secondary">{t.marketing.heroBody}</p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link
+                to="/auth/sign-up"
+                className="rounded-full bg-jade-700 px-6 py-3.5 font-semibold text-white hover:bg-jade-800"
+              >
+                {t.marketing.ctaPrimary}
+              </Link>
+              <Link
+                to="/#how"
+                className="rounded-full border border-line px-6 py-3.5 font-semibold text-content-primary hover:bg-white"
+              >
+                {t.marketing.ctaSecondary}
+              </Link>
+            </div>
+            <p className="mt-5 max-w-2xl text-sm text-content-muted">
+              {t.marketing.productBoundary}
+            </p>
+            <p className="mt-5 text-sm text-content-muted">{t.legal.promise}</p>
           </div>
-          <p className="mt-5 max-w-2xl text-sm text-white/60">
-            {t.marketing.productBoundary}
-          </p>
-          <p className="mt-5 text-sm text-white/60">{t.legal.promise}</p>
+          <HeroLedgerCard />
         </div>
       </section>
 
@@ -132,15 +145,13 @@ const ENTITY_TYPES: EntityType[] = [
  * `refreshIdentity()` re-reads memberships so the app shell can resolve a role
  * for the new business immediately rather than on the next page load.
  *
- * The owner name and phone collected here are not written to `profiles`: the
- * signup metadata already populated that row via `on_auth_user_created`, and
- * overwriting it from the wizard would silently discard whatever the user
- * typed at signup. These fields prefill from the signed-in profile instead.
+ * Identity is collected only at signup. This wizard does not ask for it again;
+ * the optional phone below belongs to the business record, not the owner.
  */
 export function Onboarding({
   step, fallbackIndustry = 'restaurant',
 }: { step: string; fallbackIndustry?: Industry }) {
-  const { t } = useI18n();
+  const { t, setLocale } = useI18n();
   const { navigate } = useNav();
   const { status, identity, refreshIdentity, setActiveBusinessId } = useAuth();
 
@@ -160,6 +171,10 @@ export function Onboarding({
   const STEPS = ['language', 'owner', 'business', 'industry', 'entity', 'connections', 'complete'];
   const idx = Math.max(1, STEPS.indexOf(step) + 1);
   const next = (to: string) => navigate(`/onboarding/${to}`);
+  const chooseLanguage = (locale: 'en' | 'vi') => {
+    setLocale(locale);
+    next('owner');
+  };
 
   /** Writes through to sessionStorage on every keystroke so back never loses input. */
   const set = <K extends keyof OnboardingDraft>(key: K, value: OnboardingDraft[K]) => {
@@ -187,7 +202,7 @@ export function Onboarding({
 
     // Demo mode has no database. The wizard still completes so the preview
     // build and the unit suite can walk the whole flow.
-    if (status === 'unconfigured') {
+    if (status === 'demo') {
       clearDraft();
       navigate('/app/dashboard');
       return;
@@ -201,7 +216,7 @@ export function Onboarding({
       dbaName: draft.dbaName,
       industry: draft.industry,
       entityType: draft.entityType,
-      phone: draft.ownerPhone,
+      phone: draft.businessPhone,
       address: {
         line1: draft.line1,
         line2: null,
@@ -221,10 +236,10 @@ export function Onboarding({
       return;
     }
 
-    // Select the new business before refreshing, so the shell has a target the
-    // moment the membership appears.
-    setActiveBusinessId(result.data.id);
+    // Refresh first so selection can prove the returned business is present in
+    // the caller's accepted memberships. The setter refuses arbitrary ids.
     await refreshIdentity();
+    setActiveBusinessId(result.data.id);
     clearDraft();
     setSaving(false);
     navigate('/app/dashboard');
@@ -232,43 +247,29 @@ export function Onboarding({
 
   return (
     <OnboardingLayout step={idx} total={STEPS.length} title={titles[step] ?? ''}>
+      <p className="mb-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+        {status === 'demo' ? t.states.demoBanner : t.states.livePilotBanner}
+      </p>
       {saveError && <FormError message={saveError} />}
 
       {step === 'language' && (
         <>
           <p className="mb-6 text-ink-500">{t.onboarding.languageBody}</p>
           <div className="grid gap-3 sm:grid-cols-2">
-            <LangCard label="Tiếng Việt" note="Ngôn ngữ chính" onClick={() => next('owner')} />
-            <LangCard label="English" note="Primary language" onClick={() => next('owner')} />
+            <LangCard label="English" note="Primary language" onClick={() => chooseLanguage('en')} />
+            <LangCard label="Tiếng Việt" note="Ngôn ngữ phụ" onClick={() => chooseLanguage('vi')} />
           </div>
         </>
       )}
 
       {step === 'owner' && (
         <Card className="p-6">
+          <p className="mb-4 text-sm text-content-muted">{t.onboarding.ownerBody}</p>
           {identity && (
             <p className="mb-4 text-sm text-content-muted">
               {t.onboarding.signedInAs} {identity.email}
             </p>
           )}
-          <Field id="oname" label={t.auth.ownerName}>
-            <Input
-              id="oname"
-              value={draft.ownerName || identity?.displayName || ''}
-              onChange={(e) => set('ownerName', e.target.value)}
-              autoComplete="name"
-            />
-          </Field>
-          <Field id="ophone" label={t.auth.phone} hint={t.auth.phoneOptional}>
-            <Input
-              id="ophone"
-              type="tel"
-              inputMode="tel"
-              autoComplete="tel"
-              value={draft.ownerPhone}
-              onChange={(e) => set('ownerPhone', e.target.value)}
-            />
-          </Field>
           <Button className="w-full" onClick={() => next('business')}>{t.common.continue}</Button>
         </Card>
       )}
@@ -286,6 +287,16 @@ export function Onboarding({
           </Field>
           <Field id="dba" label={t.onboarding.dbaName}>
             <Input id="dba" value={draft.dbaName} onChange={(e) => set('dbaName', e.target.value)} />
+          </Field>
+          <Field id="business-phone" label={t.onboarding.businessPhone} hint={t.auth.phoneOptional}>
+            <Input
+              id="business-phone"
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              value={draft.businessPhone}
+              onChange={(e) => set('businessPhone', e.target.value)}
+            />
           </Field>
           <Field id="addr" label={t.onboarding.address} hint={t.onboarding.localityNote}>
             <Input
@@ -380,14 +391,22 @@ export function Onboarding({
       {step === 'connections' && (
         <Card className="p-6">
           <p className="mb-5 text-ink-500">{t.onboarding.connectionsBody}</p>
-          <div className="mb-5 space-y-2">
-            {(['bank', 'credit_card', 'payment_processor'] as const).map((k) => (
-              <div key={k} className="flex items-center justify-between rounded-xl border border-line px-4 py-3">
-                <span className="font-medium">{t.connections[k]}</span>
-                <Button variant="secondary" size="sm">{t.connections.connect}</Button>
-              </div>
-            ))}
-          </div>
+          {status === 'demo' ? (
+            <div className="mb-5 space-y-2">
+              {(['bank', 'credit_card', 'payment_processor'] as const).map((k) => (
+                <div key={k} className="flex items-center justify-between rounded-xl border border-line px-4 py-3">
+                  <span className="font-medium">{t.connections[k]}</span>
+                  <span className="rounded-full bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-900">
+                    {t.states.demoLabel}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="mb-5 rounded-xl border border-line bg-cream px-4 py-3 text-sm text-content-muted">
+              {t.onboarding.connectionsUnavailable}
+            </p>
+          )}
           <p className="mb-5 text-sm text-ink-500">{t.connections.neverCredentials}</p>
           <Button className="w-full" onClick={() => next('complete')}>{t.common.continue}</Button>
         </Card>
@@ -396,13 +415,102 @@ export function Onboarding({
       {step === 'complete' && (
         <Card className="p-8 text-center">
           <div className="mb-3 text-4xl" aria-hidden="true">✓</div>
-          <p className="mb-6 text-ink-500">{t.onboarding.completeBody}</p>
+          <p className="mb-6 text-ink-500">
+            {status === 'demo' ? t.onboarding.completeBodyDemo : t.onboarding.completeBody}
+          </p>
           <Button onClick={() => void createAndEnter()} disabled={saving} aria-busy={saving}>
-            {saving ? t.onboarding.saving : t.onboarding.createBusiness}
+            {saving ? t.onboarding.saving : status === 'demo' ? t.onboarding.enterDemo : t.onboarding.createBusiness}
           </Button>
         </Card>
       )}
     </OnboardingLayout>
+  );
+}
+
+/**
+ * april-inspired hero illustration, v2: a large glossy 3D-style tile (like
+ * getapril.com's floating gradient "a" mark) built from layered SVG gradients
+ * and a bevel highlight, orbited by smaller neutral tiles for depth — same
+ * composition as april's hero, in the VNTax jade/gold palette. Ledger-card
+ * detail lives on the front face instead of a wordmark.
+ */
+function HeroLedgerCard() {
+  const { t } = useI18n();
+  return (
+    <div className="relative mx-auto aspect-square w-full max-w-sm p-6 sm:max-w-md sm:p-8 lg:max-w-xl" aria-hidden="true">
+      <div className="absolute inset-0 rounded-full bg-jade-600/10 blur-3xl" />
+      <svg viewBox="0 0 600 600" className="absolute inset-0 h-full w-full overflow-visible" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <linearGradient id="tileFace" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#E8E4DA" />
+            <stop offset="100%" stopColor="#C9C4B6" />
+          </linearGradient>
+          <linearGradient id="tileEdge" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#F5F3EC" />
+            <stop offset="100%" stopColor="#B6B0A0" />
+          </linearGradient>
+          <linearGradient id="mainTile" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#1E7A63" />
+            <stop offset="100%" stopColor="#0C3830" />
+          </linearGradient>
+        </defs>
+
+        {/* orbiting neutral tiles — mirrors april's ring of gray panels */}
+        {[
+          { x: 430, y: 90, r: -18, s: 108, op: 0.95 },
+          { x: 505, y: 190, r: 8, s: 96, op: 0.9 },
+          { x: 520, y: 305, r: -10, s: 100, op: 0.92 },
+          { x: 470, y: 415, r: 20, s: 92, op: 0.85 },
+          { x: 365, y: 480, r: -6, s: 100, op: 0.9 },
+          { x: 245, y: 470, r: 14, s: 84, op: 0.8 },
+          { x: 155, y: 385, r: -16, s: 88, op: 0.75 },
+          { x: 130, y: 260, r: 10, s: 92, op: 0.8 },
+        ].map((tile, i) => (
+          <g key={i} transform={`translate(${tile.x} ${tile.y}) rotate(${tile.r})`} opacity={tile.op}>
+            <rect
+              x={-tile.s / 2}
+              y={-tile.s / 2}
+              width={tile.s}
+              height={tile.s}
+              rx={tile.s * 0.16}
+              fill="url(#tileFace)"
+            />
+            <rect
+              x={-tile.s / 2}
+              y={-tile.s / 2}
+              width={tile.s}
+              height={tile.s * 0.18}
+              rx={tile.s * 0.16}
+              fill="url(#tileEdge)"
+              opacity="0.6"
+            />
+          </g>
+        ))}
+
+        {/* main jade tile, front and center — the "a" mark equivalent */}
+        <g transform="translate(300 290) rotate(-8)">
+          <rect x="-115" y="-115" width="230" height="230" rx="36" fill="url(#mainTile)" />
+          <rect x="-115" y="-115" width="230" height="48" rx="36" fill="#2E9678" opacity="0.35" />
+          {/* ledger-card glyph on the tile face, replacing a wordmark */}
+          <rect x="-58" y="-56" width="92" height="18" rx="5" fill="#F5F3EC" />
+          <rect x="-58" y="-26" width="116" height="10" rx="4" fill="#F5F3EC" opacity="0.75" />
+          <rect x="-58" y="-4" width="116" height="10" rx="4" fill="#F5F3EC" opacity="0.55" />
+          <rect x="-58" y="18" width="80" height="10" rx="4" fill="#F5F3EC" opacity="0.55" />
+          <rect x="-58" y="46" width="70" height="16" rx="6" fill="#C79A42" />
+          <rect x="22" y="46" width="36" height="16" rx="6" fill="#F5F3EC" opacity="0.4" />
+        </g>
+
+        {/* gold checkmark badge, floating in front of the main tile */}
+        <g transform="translate(410 190)">
+          <circle r="38" fill="#C79A42" />
+          <path d="M-16 0l11 11 21-24" stroke="#0C3830" strokeWidth="6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        </g>
+      </svg>
+
+      <div className="absolute -bottom-4 left-1/2 w-max -translate-x-1/2 rounded-xl border border-line bg-white px-4 py-2 font-mono text-xs text-content-primary shadow-lg sm:-bottom-2">
+        {t.marketing.workflowProof}
+      </div>
+    </div>
   );
 }
 
@@ -417,4 +525,3 @@ function LangCard({ label, note, onClick }: { label: string; note: string; onCli
     </button>
   );
 }
-

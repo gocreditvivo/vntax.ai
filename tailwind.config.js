@@ -65,6 +65,7 @@ export default {
       fontFamily: {
         sans: ['"Be Vietnam Pro"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
         display: ['Lora', 'Georgia', 'serif'],
+        mono: ['"IBM Plex Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
       },
       borderColor: { DEFAULT: '#E5E0D6' },
     },

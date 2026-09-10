@@ -23,7 +23,7 @@ import { useI18n } from '../../i18n';
 import { Link, useNav } from '../../app/router';
 import { useAuth } from '../../auth/AuthProvider';
 import { isValidEmail, isValidPassword, type AuthErrorCode } from '../../auth/errors';
-import { sendPasswordReset } from '../../auth/session';
+import { sendPasswordReset, updatePassword } from '../../auth/session';
 import { AuthLayout } from '../../layouts';
 import { Button, Card, Field, FormError, FormNotice, Input } from '../../components/ui';
 
@@ -43,7 +43,6 @@ export function SignUp() {
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
 
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -73,7 +72,7 @@ export function SignUp() {
 
     setBusy(true);
     const result = await signUp({
-      email, password, displayName: name, phone, locale,
+      email, password, displayName: name, locale,
     });
     setBusy(false);
 
@@ -155,19 +154,6 @@ export function SignUp() {
               onChange={(e) => { setEmail(e.target.value); setFieldErrors((p) => ({ ...p, email: '' })); }}
               aria-invalid={!!fieldErrors.email}
               aria-describedby={fieldErrors.email ? 'email-error' : undefined}
-              disabled={busy}
-            />
-          </Field>
-
-          <Field id="phone" label={t.auth.phone} hint={t.auth.mfaNote}>
-            <Input
-              id="phone"
-              name="phone"
-              type="tel"
-              inputMode="tel"
-              autoComplete="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
               disabled={busy}
             />
           </Field>
@@ -320,6 +306,122 @@ export function Login() {
           {t.auth.noAccount}{' '}
           <Link to="/auth/sign-up" className="font-medium text-jade-700 underline">{t.common.signUp}</Link>
         </p>
+      </Card>
+    </AuthLayout>
+  );
+}
+
+// --- password recovery ------------------------------------------------------
+
+/** Completes the recovery link flow; it never asks for or displays the email. */
+export function ResetPassword() {
+  const { t } = useI18n();
+  const { status, signOut } = useAuth();
+  const message = useAuthMessage();
+
+  const [password, setPassword] = useState('');
+  const [confirmation, setConfirmation] = useState('');
+  const [formError, setFormError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [complete, setComplete] = useState(false);
+
+  async function onSubmit(e: FormEvent) {
+    e.preventDefault();
+    if (busy) return;
+    setFormError(null);
+
+    if (!password || !confirmation) {
+      setFormError(message('required_fields'));
+      return;
+    }
+    if (!isValidPassword(password)) {
+      setFormError(message('weak_password'));
+      return;
+    }
+    if (password !== confirmation) {
+      setFormError(message('password_mismatch'));
+      return;
+    }
+
+    setBusy(true);
+    const result = await updatePassword(password);
+    if (!result.ok) {
+      setBusy(false);
+      setFormError(message(result.error.code));
+      return;
+    }
+
+    // A recovery link creates an authenticated browser session. Clear it on
+    // this shared-device-oriented product and require a normal sign-in with
+    // the new password.
+    await signOut();
+    setBusy(false);
+    setComplete(true);
+    setPassword('');
+    setConfirmation('');
+  }
+
+  if (complete) {
+    return (
+      <AuthLayout>
+        <Card className="p-7">
+          <h1 className="display-section mb-3 text-2xl">{t.auth.resetCompleteTitle}</h1>
+          <FormNotice message={t.auth.resetCompleteBody} />
+          <Link to="/auth/login" className="inline-flex font-medium text-jade-700 underline">
+            {t.common.signIn}
+          </Link>
+        </Card>
+      </AuthLayout>
+    );
+  }
+
+  if (status !== 'signed_in') {
+    return (
+      <AuthLayout>
+        <Card className="p-7">
+          <h1 className="display-section mb-3 text-2xl">{t.auth.resetInvalidTitle}</h1>
+          <FormError message={message('invalid_recovery_link')} />
+          <Link to="/auth/login" className="inline-flex font-medium text-jade-700 underline">
+            {t.common.signIn}
+          </Link>
+        </Card>
+      </AuthLayout>
+    );
+  }
+
+  return (
+    <AuthLayout>
+      <Card className="p-7">
+        <h1 className="display-section mb-3 text-2xl">{t.auth.resetTitle}</h1>
+        <p className="mb-6 text-sm text-content-muted">{t.auth.resetBody}</p>
+        {formError && <FormError message={formError} />}
+        <form onSubmit={onSubmit} noValidate>
+          <Field id="new-password" label={t.auth.newPassword} hint={t.auth.passwordHint}>
+            <Input
+              id="new-password"
+              name="new-password"
+              type="password"
+              autoComplete="new-password"
+              value={password}
+              onChange={(e) => { setPassword(e.target.value); setFormError(null); }}
+              disabled={busy}
+            />
+          </Field>
+          <Field id="confirm-password" label={t.auth.confirmPassword}>
+            <Input
+              id="confirm-password"
+              name="confirm-password"
+              type="password"
+              autoComplete="new-password"
+              value={confirmation}
+              onChange={(e) => { setConfirmation(e.target.value); setFormError(null); }}
+              disabled={busy}
+            />
+          </Field>
+          <Button type="submit" className="w-full" disabled={busy} aria-busy={busy}>
+            {busy ? t.auth.resettingPassword : t.auth.resetAction}
+          </Button>
+        </form>
       </Card>
     </AuthLayout>
   );

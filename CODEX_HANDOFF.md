@@ -1,11 +1,19 @@
 # VNTax — Supabase Handoff for Codex
 
-**Status: the database is already built. Do not create tables or write new migrations.**
+**Current status: the historical database exists in a shared TrinityAI project,
+which is forbidden for VNTax customer production. Do not invent a replacement
+schema or apply new migrations until an authorized export of the original core
+schema is available.**
 
-Applied on 2026-08-06 to the dedicated `vntax-ai` Supabase project. Three migrations are live:
-`vntax_core_schema`, `vntax_row_level_security`, `vntax_harden_functions`.
+The prior handoff states that three migrations were applied on 2026-08-06:
+`vntax_core_schema`, `vntax_row_level_security`, and
+`vntax_harden_functions`. Those core migration files are not in this checkout;
+the four committed SQL files are later incremental changes and cannot bootstrap
+a fresh project by themselves.
 
-The repo `gocreditvivo/vntax.ai` was **not** touched — no commits, no branches, no pushes. All remaining work is client-side.
+The production-readiness changes in this checkout are local commits on
+`april-inspired-redesign`. The public remote branch, pull requests, and
+production deployment remain unchanged pending Tim's fresh approval.
 
 ---
 
@@ -13,22 +21,27 @@ The repo `gocreditvivo/vntax.ai` was **not** touched — no commits, no branches
 
 | Item | Value |
 |---|---|
-| Project ref | `rcmcqcinndypoupgjezi` |
-| API URL | `https://rcmcqcinndypoupgjezi.supabase.co` |
-| Publishable key | see `VITE_SUPABASE_PUBLISHABLE_KEY` (not committed — this repo is public) |
-| Region | us-east-1 |
-| Postgres | 17 |
+| Historical project ref | `rcmcqcinndypoupgjezi` — **shared TrinityAI relay; forbidden for VNTax production** |
+| Required production target | A genuinely separate, approved VNTax Supabase project |
+| Publishable key | Dedicated project browser key only; never a secret/service-role key |
+| Region/Postgres | Reconfirm when the dedicated project is provisioned |
 
-This is VNTax's own project. Taxpayer data is deliberately isolated from Credit Vivo and Linh. Do not point VNTax at `gocreditvivo's Project` (`gykmlrctdzyzoobsmfqw`).
+The historical project is also the TrinityAI relay project. Its publishable key
+can anonymously select `relay_messages`; therefore it is not an acceptable
+customer-data boundary and must not be shipped in the VNTax browser bundle.
+`src/lib/env.ts` now locks the app if that host is configured. Do not point
+VNTax at any CreditVivo, relay, Linh, or other shared project.
 
 Env vars to add to `.env.local` and Vercel:
 
 ```
-VITE_SUPABASE_URL=https://rcmcqcinndypoupgjezi.supabase.co
-VITE_SUPABASE_PUBLISHABLE_KEY=<publishable key from the Supabase dashboard>
+VITE_SUPABASE_URL=https://<dedicated-vntax-project-ref>.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=<dedicated VNTax publishable key>
 ```
 
-The publishable key is safe in the browser. RLS is what protects the data. **Never put the service role key in client code.**
+A dedicated project's publishable key is designed for browser use only when
+its grants and RLS have been verified. A browser key is not a confidentiality
+boundary. **Never put a secret or service-role key in client code.**
 
 ---
 
@@ -127,18 +140,31 @@ Standard pattern per business-scoped table: **select** requires `is_member_of`, 
 
 ---
 
-## Remaining client work
+## Current implementation and remaining work
 
-1. `src/lib/supabase.ts` — create the client from the env vars. `@supabase/supabase-js@^2` is the right dependency.
-2. **Replace `src/app/auth.ts`.** It currently writes the literal string `demo_session` into `localStorage` and `isAuthenticated()` just checks that the key exists. Replace with a real session: `getSession`, `onAuthStateChange`, and a provider so the guard in `App.tsx:45` reads live session state.
-3. **Wire the real forms.** `SignUp` and `Login` in `src/features/marketing/screens.tsx` currently ignore their inputs entirely and call `setSession()` on click. They need controlled inputs, `signUp` / `signInWithPassword`, error states, and a loading state.
-4. **Build the `Caller` from the session, not from fixtures.** `App.tsx` hardcodes `u_owner_rest` and picks a business out of `BUSINESSES`. Replace with the signed-in user's id and their membership role for the selected business.
-5. **Persistence.** The service layer in `src/services/` reads and mutates the in-memory `db()` from `src/services/store.ts`, which reseeds from fixtures on every load. The architecture already calls this out as the intended seam. Two viable approaches:
+1. **Completed locally:** validated browser environment, Supabase client, real
+   session provider, controlled authentication forms, identity/membership
+   hydration, atomic business creation, and session-derived caller/role.
+2. **Completed locally:** explicit locked, live-limited, and opt-in synthetic
+   modes. A real account cannot mount fixture ledger features.
+3. **New verification tool:** `tools/rls-smoke-test.mjs` requires two approved
+   disposable accounts, ordinary user tokens, explicit mutation consent, empty
+   account prechecks, a generated-type structural schema preflight, and
+   confirmed cleanup. It contains no fixed credentials and never writes
+   directly to `auth.users`.
+4. **Blocking infrastructure:** provision a dedicated VNTax project, obtain an
+   authoritative export of the missing core schema/RLS migrations, apply the
+   complete ordered migration set, then run the authenticated isolation tool.
+   See `docs/SCHEMA_RECOVERY_AUDIT.md` for the sources inspected and the safe
+   acquisition path.
+5. **Persistence remains open.** The service layer in `src/services/` reads and mutates the in-memory `db()` from `src/services/store.ts`, which reseeds from fixtures on every load. The architecture already calls this out as the intended seam. Two viable approaches:
    - **Hydrate + write-through** — load a business's rows into the store on sign-in, then mirror each mutation to Supabase. Smallest diff, keeps all existing sync service code and tests intact.
    - **Full async repositories** — replace `db()` access with Supabase queries inside each service. Cleaner long-term, much larger diff.
 
    Either way, keep a no-op persistence adapter as the default so `src/tests/` keeps running against fixtures without network.
-6. **Then, and only then, OCR.** Azure Document Intelligence for W-2/1099, Veryfi for receipts. Wiring OCR before persistence lands would write extraction results into a store that resets on refresh — the exact failure this work was ordered to prevent.
+6. **Then, and only then, evaluate OCR vendors.** No OCR vendor is installed or
+   approved. Wiring OCR before persistence, private storage, retention, and
+   legal/vendor review would accept files into an unready system.
 
 ---
 

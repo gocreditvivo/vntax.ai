@@ -67,16 +67,16 @@ const CHAT_SCRIPT: Record<ScriptLocale, Step[]> = {
       ],
     },
     {
-      bot: "Perfect, thank you. Now let's get one paper in. You don't have to type anything \u2014 just snap a photo and I'll read it for you.",
+      bot: 'Synthetic walkthrough only: this guide does not accept or read files. Choose a fictional sample to preview the planned review step.',
       learn: { key: 'formW2', label: "What's a W-2?" },
       replies: [
-        { emoji: '\u{1F4F7}', label: 'Take a photo', style: 'snap' },
-        { emoji: '\u{1F4C1}', label: 'Upload instead' },
-        { emoji: '\u23ED\uFE0F', label: "I'll do this later" },
+        { emoji: '\u{1F4F7}', label: 'Use sample photo', style: 'snap' },
+        { emoji: '\u{1F4C1}', label: 'Use sample upload' },
+        { emoji: '\u23ED\uFE0F', label: 'Skip sample' },
       ],
     },
     {
-      bot: "Got it! \u{1F389} I read your form. Here's what I found \u2014 have a look and tell me if it looks right:\n\n\u{1F4C4} 1099-NEC \u00B7 income \u00B7 $6,900\n\u{1F9FE} Supply receipt \u00B7 expense \u00B7 $84",
+      bot: "Sample preview only \u2014 no file was read or saved. A future review could look like this:\n\n\u{1F4C4} Fictional 1099-NEC \u00B7 income \u00B7 $6,900\n\u{1F9FE} Fictional supply receipt \u00B7 expense \u00B7 $84",
       learn: { key: 'expense', label: "What's an expense?" },
       replies: [
         { emoji: '\u2705', label: 'Yes, that looks right' },
@@ -84,13 +84,13 @@ const CHAT_SCRIPT: Record<ScriptLocale, Step[]> = {
       ],
     },
     {
-      bot: "One helpful thing to know: because you work for yourself, taxes are paid a few times a year, not just in April. Don't worry \u2014 I'll remind you. \u{1F514} Your next date is September 15.",
+      bot: 'One planning concept: some self-employed people may need estimated payments during the year. This demo does not calculate a requirement or send reminders; current dates and your facts must be verified.',
       learn: { key: 'quarterly', label: 'Why a few times a year?' },
       replies: [{ emoji: '\u{1F44D}', label: 'Good to know' }],
     },
     {
-      bot: "That's everything for now! \u{1F337} Your papers are organized and in one place. Anything tricky, a real person on our team reviews it \u2014 you're never on your own with this.",
-      replies: [{ emoji: '\u{1F3E0}', label: 'Go to my dashboard' }],
+      bot: "That's the end of the synthetic guide. No papers were stored and no human review request was created.",
+      replies: [{ emoji: '\u{1F3E0}', label: 'Open synthetic dashboard' }],
     },
   ],
   vi: [
@@ -114,16 +114,16 @@ const CHAT_SCRIPT: Record<ScriptLocale, Step[]> = {
       ],
     },
     {
-      bot: 'T\u1ED1t l\u1EAFm, c\u1EA3m \u01A1n b\u1EA1n. Gi\u1EDD th\u00EAm m\u1ED9t t\u1EDD gi\u1EA5y nh\u00E9. B\u1EA1n kh\u00F4ng c\u1EA7n g\u00F5 g\u00EC c\u1EA3 \u2014 ch\u1EC9 c\u1EA7n ch\u1EE5p h\u00ECnh, t\u00F4i s\u1EBD \u0111\u1ECDc gi\u00FAp.',
+      bot: 'Ch\u1EC9 l\u00E0 ph\u1EA7n xem th\u1EED gi\u1EA3 l\u1EADp: h\u01B0\u1EDBng d\u1EABn n\u00E0y kh\u00F4ng nh\u1EADn ho\u1EB7c \u0111\u1ECDc t\u1EC7p. Ch\u1ECDn m\u1ED9t m\u1EABu h\u01B0 c\u1EA5u \u0111\u1EC3 xem b\u01B0\u1EDBc ki\u1EC3m tra d\u1EF1 ki\u1EBFn.',
       learn: { key: 'formW2', label: 'W-2 l\u00E0 g\u00EC?' },
       replies: [
-        { emoji: '\u{1F4F7}', label: 'Ch\u1EE5p h\u00ECnh', style: 'snap' },
-        { emoji: '\u{1F4C1}', label: 'T\u1EA3i l\u00EAn' },
-        { emoji: '\u23ED\uFE0F', label: '\u0110\u1EC3 sau' },
+        { emoji: '\u{1F4F7}', label: 'D\u00F9ng h\u00ECnh m\u1EABu', style: 'snap' },
+        { emoji: '\u{1F4C1}', label: 'D\u00F9ng t\u1EC7p m\u1EABu' },
+        { emoji: '\u23ED\uFE0F', label: 'B\u1ECF qua m\u1EABu' },
       ],
     },
     {
-      bot: '\u0110\u01B0\u1EE3c r\u1ED3i! \u{1F389} T\u00F4i \u0111\u00E3 \u0111\u1ECDc t\u1EDD gi\u1EA5y. \u0110\u00E2y l\u00E0 nh\u1EEFng g\u00EC t\u00F4i th\u1EA5y \u2014 xem gi\u00FAp c\u00F3 \u0111\u00FAng kh\u00F4ng:\n\n\u{1F4C4} 1099-NEC \u00B7 thu nh\u1EADp \u00B7 $6,900\n\u{1F9FE} Bi\u00EAn lai v\u1EADt t\u01B0 \u00B7 chi ph\u00ED \u00B7 $84',
+      bot: 'Ch\u1EC9 l\u00E0 m\u1EABu xem th\u1EED \u2014 kh\u00F4ng c\u00F3 t\u1EC7p n\u00E0o \u0111\u01B0\u1EE3c \u0111\u1ECDc hay l\u01B0u. B\u01B0\u1EDBc ki\u1EC3m tra sau n\u00E0y c\u00F3 th\u1EC3 tr\u00F4ng nh\u01B0 sau:\n\n\u{1F4C4} 1099-NEC h\u01B0 c\u1EA5u \u00B7 thu nh\u1EADp \u00B7 $6,900\n\u{1F9FE} Bi\u00EAn lai h\u01B0 c\u1EA5u \u00B7 chi ph\u00ED \u00B7 $84',
       learn: { key: 'expense', label: 'Chi ph\u00ED l\u00E0 g\u00EC?' },
       replies: [
         { emoji: '\u2705', label: '\u0110\u00FAng r\u1ED3i' },
@@ -131,13 +131,13 @@ const CHAT_SCRIPT: Record<ScriptLocale, Step[]> = {
       ],
     },
     {
-      bot: 'M\u1ED9t \u0111i\u1EC1u h\u1EEFu \u00EDch: v\u00EC b\u1EA1n t\u1EF1 l\u00E0m ch\u1EE7, thu\u1EBF \u0111\u00F3ng v\u00E0i l\u1EA7n m\u1ED9t n\u0103m, kh\u00F4ng ch\u1EC9 th\u00E1ng T\u01B0. \u0110\u1EEBng lo \u2014 t\u00F4i s\u1EBD nh\u1EAFc. \u{1F514} Ng\u00E0y k\u1EBF c\u1EE7a b\u1EA1n l\u00E0 15 th\u00E1ng 9.',
+      bot: 'M\u1ED9t kh\u00E1i ni\u1EC7m \u0111\u1EC3 chu\u1EA9n b\u1ECB: m\u1ED9t s\u1ED1 ng\u01B0\u1EDDi t\u1EF1 l\u00E0m ch\u1EE7 c\u00F3 th\u1EC3 ph\u1EA3i \u0111\u00F3ng thu\u1EBF t\u1EA1m t\u00EDnh trong n\u0103m. B\u1EA3n m\u1EABu n\u00E0y kh\u00F4ng x\u00E1c \u0111\u1ECBnh ngh\u0129a v\u1EE5 hay g\u1EEDi nh\u1EAFc nh\u1EDF; c\u1EA7n ki\u1EC3m tra ng\u00E0y hi\u1EC7n h\u00E0nh v\u00E0 ho\u00E0n c\u1EA3nh th\u1EF1c t\u1EBF.',
       learn: { key: 'quarterly', label: 'V\u00EC sao v\u00E0i l\u1EA7n m\u1ED9t n\u0103m?' },
       replies: [{ emoji: '\u{1F44D}', label: 'Hay \u0111\u00F3' }],
     },
     {
-      bot: 'V\u1EADy l\u00E0 xong! \u{1F337} Gi\u1EA5y t\u1EDD c\u1EE7a b\u1EA1n \u0111\u00E3 g\u1ECDn m\u1ED9t ch\u1ED7. Vi\u1EC7c g\u00EC kh\u00F3, m\u1ED9t ng\u01B0\u1EDDi th\u1EADt trong nh\u00F3m s\u1EBD xem \u2014 b\u1EA1n kh\u00F4ng bao gi\u1EDD ph\u1EA3i t\u1EF1 lo m\u1ED9t m\u00ECnh.',
-      replies: [{ emoji: '\u{1F3E0}', label: 'T\u1EDBi trang c\u1EE7a t\u00F4i' }],
+      bot: 'Ph\u1EA7n h\u01B0\u1EDBng d\u1EABn gi\u1EA3 l\u1EADp \u0111\u00E3 xong. Kh\u00F4ng c\u00F3 gi\u1EA5y t\u1EDD n\u00E0o \u0111\u01B0\u1EE3c l\u01B0u v\u00E0 kh\u00F4ng c\u00F3 y\u00EAu c\u1EA7u ng\u01B0\u1EDDi th\u1EADt xem l\u1EA1i.',
+      replies: [{ emoji: '\u{1F3E0}', label: 'M\u1EDF trang gi\u1EA3 l\u1EADp' }],
     },
   ],
 };

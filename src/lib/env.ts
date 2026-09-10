@@ -25,6 +25,16 @@ export type EnvState =
   | { configured: true; env: SupabaseEnv }
   | { configured: false; reason: string };
 
+/**
+ * This project is the TrinityAI coordination relay, not a customer-data
+ * boundary. Its publishable key can read relay_messages, so it must never be
+ * compiled into VNTax. Keep this denial explicit even after a dedicated VNTax
+ * project exists: a copied legacy environment variable must fail closed.
+ */
+const FORBIDDEN_SHARED_SUPABASE_HOSTS = new Set([
+  'rcmcqcinndypoupgjezi.supabase.co',
+]);
+
 /** Reads Vite env without assuming `import.meta.env` exists (node, tests). */
 function readRaw(key: string): string {
   try {
@@ -40,7 +50,7 @@ function readRaw(key: string): string {
  * Validating the shape here turns a confusing runtime symptom into a clear
  * startup message.
  */
-function validate(url: string, key: string): EnvState {
+export function validateSupabaseEnv(url: string, key: string): EnvState {
   if (!url && !key) {
     return { configured: false, reason: 'VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY are not set' };
   }
@@ -55,6 +65,15 @@ function validate(url: string, key: string): EnvState {
   }
   if (parsed.protocol !== 'https:') {
     return { configured: false, reason: 'VITE_SUPABASE_URL must use https' };
+  }
+  if (!parsed.hostname.endsWith('.supabase.co')) {
+    return { configured: false, reason: 'VITE_SUPABASE_URL must identify an approved Supabase project' };
+  }
+  if (FORBIDDEN_SHARED_SUPABASE_HOSTS.has(parsed.hostname)) {
+    return {
+      configured: false,
+      reason: 'The configured project is the shared TrinityAI relay and is forbidden for VNTax customer data',
+    };
   }
 
   // Catch the single most damaging misconfiguration: a service-role key pasted
@@ -87,9 +106,31 @@ export function looksLikeServiceRoleKey(key: string): boolean {
   }
 }
 
-export const envState: EnvState = validate(
+export const envState: EnvState = validateSupabaseEnv(
   readRaw('VITE_SUPABASE_URL'),
   readRaw('VITE_SUPABASE_PUBLISHABLE_KEY')
 );
 
 export const isSupabaseConfigured = envState.configured;
+
+export type RuntimeMode = 'live_limited' | 'synthetic_demo' | 'locked';
+
+/** Pure and testable: production must never infer demo access from missing credentials. */
+export function resolveRuntimeMode(configured: boolean, demoEnabled: boolean): RuntimeMode {
+  if (configured) return 'live_limited';
+  return demoEnabled ? 'synthetic_demo' : 'locked';
+}
+
+/**
+ * Synthetic fixtures require an explicit build-time opt-in. Tests opt in
+ * automatically, but an ordinary production build with missing credentials is
+ * locked. This prevents a Vercel env mistake from publishing a fake customer
+ * dashboard as though it were a live account.
+ */
+export const syntheticDemoEnabled =
+  readRaw('VITE_ENABLE_SYNTHETIC_DEMO') === 'true' || readRaw('MODE') === 'test';
+
+export const runtimeMode: RuntimeMode = resolveRuntimeMode(
+  envState.configured,
+  syntheticDemoEnabled,
+);

@@ -28,10 +28,10 @@ export const vi: Dict = {
     loading: 'Đang tải…',
     retry: 'Thử lại',
     errorTitle: 'Có gì đó không ổn',
-    errorBody: 'Chúng tôi không tải được phần này. Dữ liệu của anh chị vẫn an toàn.',
+    errorBody: 'Chúng tôi không tải được phần này. Anh chị thử lại giúp.',
     of: 'trong',
     signIn: 'Đăng nhập',
-    signUp: 'Bắt đầu',
+    signUp: 'Quyền truy cập',
     signOut: 'Đăng xuất',
     language: 'Ngôn ngữ',
     english: 'English',
@@ -45,6 +45,18 @@ export const vi: Dict = {
     blockedTitle: 'Chưa làm được việc này',
     blockedBody: 'Cần xử lý một việc khác trước đã.',
     emptyGeneric: 'Chưa có gì ở đây',
+    productUnavailableTitle: 'Bản này chưa mở tài khoản khách hàng',
+    productUnavailableBody:
+      'Bản này chưa có kết nối cơ sở dữ liệu khách hàng đã được xác minh. Hệ thống sẽ không mở bảng dữ liệu mẫu hoặc nhận đăng ký. Chỉ dùng bản đã cấu hình và được phê duyệt.',
+    livePilotLabel: 'Thử nghiệm có kiểm soát',
+    demoLabel: 'Chỉ giả lập',
+    livePilotTitle: 'Chỉ mở những tính năng đã được xác minh',
+    livePilotBody:
+      'Tài khoản và hồ sơ cơ sở dùng đăng nhập thật. Kết nối ngân hàng, giao dịch, hóa đơn, xuất hồ sơ và chia sẻ với chuyên gia chưa nối với dữ liệu riêng của khách hàng nên đang bị tắt. Bảng lương DC năm 2026 chạy tại máy và không lưu dữ liệu người làm.',
+    livePilotBanner:
+      'Thử nghiệm có kiểm soát: tài khoản thật chỉ dùng để lập hồ sơ cơ sở và bảng lương DC năm 2026 chạy tại máy. Các quy trình khác chưa nhận dữ liệu khách hàng.',
+    demoBanner:
+      'Bản mẫu giả lập: chỉ có cơ sở và hồ sơ hư cấu. Không nhập thông tin cá nhân, thuế, ngân hàng, người làm hoặc khách hàng.',
   },
 
   errors: {
@@ -68,9 +80,9 @@ export const vi: Dict = {
   },
 
   legal: {
-    promise: 'Chúng tôi sắp xếp sổ sách kinh doanh và giúp anh chị sẵn sàng cho mùa thuế.',
+    promise: 'Xem trước các quy trình sắp xếp dự kiến bằng hồ sơ hư cấu.',
     disclosure:
-      'Chúng tôi cung cấp phần mềm sắp xếp thuế và sổ sách. Chúng tôi không cung cấp dịch vụ ' +
+      'Bản xem trước có kiểm soát này minh họa quy trình sắp xếp thuế và sổ sách. Hệ thống không cung cấp dịch vụ ' +
       'pháp lý, kế toán hoặc tư vấn thuế chuyên môn. Không phải đơn vị nộp hồ sơ điện tử được ' +
       'IRS uỷ quyền. Việc áp dụng thuế và điều kiện khấu trừ phụ thuộc vào từng trường hợp và ' +
       'quy định hiện hành.',
@@ -113,37 +125,39 @@ export const vi: Dict = {
     salon: 'Tiệm nail',
     settings: 'Cài đặt',
     connections: 'Tài khoản đã nối',
+    payroll: 'Bảng tính lương DC',
   },
 
   marketing: {
     trustBadge: 'Song ngữ · Việt–Anh · Dành cho nhà hàng và tiệm nail',
-    heroTitle: 'Tự động hóa thuế thông minh cho nhà hàng và tiệm nail',
+    heroTitle: 'Bản xem trước có hướng dẫn về sổ sách và chuẩn bị thuế cho nhà hàng và tiệm nail',
     heroBody:
-      'Theo dõi chi phí. Sắp xếp hóa đơn. Tìm các khoản khấu trừ có thể áp dụng. Sẵn sàng cho mùa thuế.',
-    ctaPrimary: 'Dùng thử miễn phí',
+      'Xem quy trình bằng hồ sơ hư cấu. Kết nối ngân hàng, đọc hóa đơn, lưu giao dịch và khai thuế thật chưa được mở.',
+    workflowProof: 'Hồ sơ giả lập được sắp xếp để xem lại',
+    ctaPrimary: 'Kiểm tra quyền truy cập',
     ctaSecondary: 'Xem cách hoạt động',
     productBoundary:
-      'Phần mềm sắp xếp sổ sách. Không phải công ty kế toán, và không thay thế được kế toán.',
+      'Bản xem trước có kiểm soát. Không phải công ty kế toán, không tư vấn thuế và không thay thế chuyên gia.',
     pickIndustry: 'Anh chị đang làm nghề nào?',
     restaurantCard: 'Nhà hàng',
     restaurantCardBody: 'Giá vốn thực phẩm, phí app giao đồ ăn, lương, tiền tip, hồ sơ thuế bán hàng',
     salonCard: 'Tiệm nail',
     salonCardBody: 'Vật liệu, tiền thuê ghế, thợ thầu, mẫu W-9, tiền tip',
     howTitle: 'Cách hoạt động',
-    how1: 'Nối tài khoản của anh chị',
-    how1Body: 'Ngân hàng, thẻ, và máy quẹt thẻ. Chúng tôi không bao giờ thấy mật khẩu.',
-    how2: 'Chúng tôi sắp xếp giao dịch',
-    how2Body: 'Mỗi khoản đều được đề nghị một hạng mục. Anh chị xác nhận hoặc sửa lại.',
-    how3: 'Chụp hóa đơn',
-    how3Body: 'Chụp một tấm hình. Chúng tôi đọc và ghép với đúng giao dịch.',
-    how4: 'Sẵn sàng quanh năm',
-    how4Body: 'Biết còn thiếu gì trước tháng Ba, chứ không phải trong tháng Ba.',
+    how1: 'Xem trước cách nối tài khoản',
+    how1Body: 'Bản giả lập cho thấy quy trình dự kiến. Kết nối ngân hàng và thẻ thật chưa được cài đặt.',
+    how2: 'Xem lại hạng mục đề nghị',
+    how2Body: 'Giao dịch hư cấu minh họa bước khách hàng xác nhận. Bản xem trước không lưu sổ giao dịch khách hàng.',
+    how3: 'Xem trước cách sắp xếp hóa đơn',
+    how3Body: 'Bản mẫu dùng hóa đơn hư cấu. Hệ thống không tải lên hoặc đọc file hóa đơn của anh chị.',
+    how4: 'Chuẩn bị quy trình xem lại',
+    how4Body: 'Xem cách trình bày hồ sơ còn thiếu và các bước kiểm tra trước mùa thuế.',
     bilingualTitle: 'Làm bằng tiếng Việt, không phải dịch ra tiếng Việt',
     bilingualBody:
-      'Mọi màn hình, thông báo và giải thích đều hoạt động như nhau ở cả hai ngôn ngữ.',
-    securityTitle: 'Thông tin của anh chị vẫn là của anh chị',
+      'Các màn hình chính hỗ trợ tiếng Việt và tiếng Anh. Nội dung tiếng Việt quan trọng về thuế vẫn cần chuyên gia bản ngữ đủ năng lực xem lại trước khi mở cho khách hàng.',
+    securityTitle: 'Bản công khai không cần dữ liệu cá nhân',
     securityBody:
-      'Chúng tôi không bao giờ bán dữ liệu. Không chia sẻ với ai cho tới khi anh chị đồng ý.',
+      'Bản giả lập không cần mật khẩu ngân hàng hoặc file hóa đơn khách hàng. Không nhập thông tin tài chính hoặc thuế thật.',
     faqTitle: 'Câu hỏi thường gặp',
     finalCta: 'Sắp xếp lại sổ sách của anh chị',
   },
@@ -157,19 +171,28 @@ export const vi: Dict = {
     ownerName: 'Tên anh chị',
     haveAccount: 'Đã có tài khoản rồi?',
     noAccount: 'Lần đầu dùng?',
-    mfaNote: 'Chúng tôi sẽ nhắn mã xác nhận để giữ an toàn cho tài khoản.',
+    mfaNote: 'Thử nghiệm có kiểm soát này chưa mở xác minh bằng tin nhắn SMS.',
     phoneOptional: 'Không bắt buộc',
     passwordHint: 'Ít nhất 8 ký tự.',
     signingIn: 'Đang đăng nhập…',
     creatingAccount: 'Đang tạo tài khoản…',
     forgotPassword: 'Quên mật khẩu?',
     resetSent:
-      'Nếu email này có tài khoản, chúng tôi đã gửi liên kết đặt lại mật khẩu. Anh chị kiểm tra hộp thư giúp.',
+      'Nếu email đủ điều kiện và hệ thống gửi thư đã được cấu hình, liên kết đặt lại có thể được gửi tới. Anh chị kiểm tra hộp thư giúp.',
+    resetTitle: 'Chọn mật khẩu mới',
+    resetBody: 'Nhập mật khẩu mới cho tài khoản này. Phiên khôi phục sẽ đăng xuất sau khi hoàn tất.',
+    newPassword: 'Mật khẩu mới',
+    confirmPassword: 'Xác nhận mật khẩu mới',
+    resetAction: 'Lưu mật khẩu mới',
+    resettingPassword: 'Đang lưu mật khẩu mới…',
+    resetCompleteTitle: 'Đã cập nhật mật khẩu',
+    resetCompleteBody: 'Mật khẩu đã được cập nhật. Anh chị đăng nhập lại bằng mật khẩu mới giúp.',
+    resetInvalidTitle: 'Liên kết khôi phục không còn hoạt động',
     confirmEmailTitle: 'Xác nhận email',
     confirmEmailBody:
-      'Chúng tôi đã gửi liên kết xác nhận tới email của anh chị. Anh chị mở liên kết đó để hoàn tất tài khoản.',
+      'Việc lập tài khoản cần liên kết xác nhận email. Anh chị kiểm tra hộp thư; việc gửi thư vẫn phải được xác minh cho thử nghiệm này.',
     identityUnavailable:
-      'Chúng tôi chưa tải được tài khoản của anh chị. Dữ liệu vẫn an toàn. Anh chị thử lại giúp.',
+      'Chúng tôi chưa tải được tài khoản của anh chị. Anh chị thử lại giúp.',
     errors: {
       invalid_credentials: 'Email và mật khẩu không khớp. Anh chị thử lại giúp.',
       email_not_confirmed:
@@ -179,6 +202,8 @@ export const vi: Dict = {
       invalid_email: 'Anh chị nhập email hợp lệ giúp.',
       rate_limited: 'Thử quá nhiều lần. Anh chị đợi một phút rồi thử lại giúp.',
       required_fields: 'Anh chị điền đầy đủ các mục bắt buộc giúp.',
+      password_mismatch: 'Hai mật khẩu không khớp nhau.',
+      invalid_recovery_link: 'Liên kết khôi phục không hợp lệ hoặc đã hết hạn. Anh chị yêu cầu liên kết mới từ trang đăng nhập giúp.',
       network: 'Chúng tôi không kết nối được. Anh chị kiểm tra mạng rồi thử lại giúp.',
       not_configured: 'Chức năng đăng nhập chưa hoạt động ở môi trường này.',
       unknown: 'Có lỗi xảy ra. Anh chị thử lại giúp.',
@@ -190,9 +215,11 @@ export const vi: Dict = {
     languageTitle: 'Chọn ngôn ngữ',
     languageBody: 'Anh chị có thể đổi lại bất cứ lúc nào.',
     ownerTitle: 'Về anh chị',
+    ownerBody: 'Hồ sơ đã đăng nhập cung cấp danh tính. Bước này không hỏi lại thông tin đó.',
     businessTitle: 'Về cơ sở kinh doanh',
     businessName: 'Tên cơ sở',
     dbaName: 'Tên hiệu (DBA)',
+    businessPhone: 'Số điện thoại cơ sở',
     address: 'Địa chỉ',
     city: 'Thành phố',
     state: 'Tiểu bang',
@@ -203,11 +230,15 @@ export const vi: Dict = {
     industryTitle: 'Loại hình kinh doanh?',
     entityTitle: 'Cơ sở được lập theo hình thức nào?',
     entityHelp: 'Nếu chưa chắc, chọn cái gần nhất — mình sửa lại sau cũng được.',
-    connectionsTitle: 'Nối tài khoản',
+    connectionsTitle: 'Kết nối tài khoản',
     connectionsBody:
-      'Chúng tôi chỉ đọc giao dịch. Không bao giờ thấy mật khẩu và không bao giờ chuyển tiền.',
+      'Bước này chỉ minh họa các loại kết nối dự kiến. Kết nối ngân hàng, thẻ và máy thanh toán thật chưa được cài đặt.',
+    connectionsUnavailable:
+      'Kết nối chưa có trong thử nghiệm có kiểm soát. Không nhập thông tin đăng nhập ngân hàng hoặc tài khoản.',
     completeTitle: 'Xong rồi',
-    completeBody: 'Chúng tôi đang sắp xếp giao dịch. Việc này mất vài phút.',
+    completeBody: 'Hồ sơ cơ sở đã sẵn sàng. Việc nhập và sắp xếp giao dịch chưa được mở trong thử nghiệm có kiểm soát.',
+    completeBodyDemo: 'Đã xong phần xem thử giả lập. Không có tài khoản, cơ sở hoặc giao dịch nào được tạo.',
+    enterDemo: 'Vào bản xem thử giả lập',
     saving: 'Đang lưu…',
     createBusiness: 'Tạo cơ sở của tôi',
     businessNameRequired: 'Anh chị nhập tên cơ sở giúp.',
@@ -368,7 +399,7 @@ export const vi: Dict = {
     revoke: 'Thu hồi quyền xem',
     activeAccess: 'Đang có quyền xem',
     accessHistory: 'Lịch sử truy cập',
-    neverShared: 'Không có gì được chia sẻ cho tới khi anh chị chia sẻ.',
+    neverShared: 'Chỉ là bản giả lập. Màn hình này không thực hiện chia sẻ thật.',
     ownerOnly: 'Chỉ chủ cơ sở mới cấp hoặc thu hồi quyền xem.',
     emptyTitle: 'Chưa có ai được xem',
     emptyBody: 'Khi nào sẵn sàng, anh chị mời chuyên viên thuế vào.',
@@ -443,7 +474,7 @@ export const vi: Dict = {
     connect: 'Nối',
     reconnect: 'Nối lại',
     lastSync: 'Cập nhật lần cuối',
-    neverCredentials: 'Chúng tôi không bao giờ thấy hay lưu mật khẩu của anh chị.',
+    neverCredentials: 'Chỉ là bản giả lập. Trang này không yêu cầu hoặc nhận thông tin đăng nhập tài khoản.',
     not_connected: 'Chưa nối',
     connecting: 'Đang nối…',
     connected: 'Đã nối',
@@ -469,4 +500,3 @@ export const vi: Dict = {
     business_expense: { name: 'Business expense', gloss: 'Chi phí kinh doanh' },
   },
 };
-
